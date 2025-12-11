@@ -9,7 +9,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class AppUser {
 
     @Id
@@ -21,5 +20,12 @@ public class AppUser {
     private String email;
     private String githubId;
     private String password;
+
+    public AppUser(String username, String name, String email, String githubId) {
+        this.username = username;
+        this.name = name;
+        this.email = email;
+        this.githubId = githubId;
+    }
 
 }
