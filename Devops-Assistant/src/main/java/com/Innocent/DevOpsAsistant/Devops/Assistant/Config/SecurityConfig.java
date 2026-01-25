@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
- private final CustomSuccesHandler succesHandler;
+ private final CustomSuccessHandler succesHandler;
 
     @Bean
     public SecurityFilterChain FilterChain(HttpSecurity http){
