@@ -1,12 +1,13 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Repository;
 
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 
 @Repository
 public interface AppUserRepository extends JpaRepository<AppUser,Long> {
-    Optional<AppUser> findByGithubId(String id);
+     Optional<AppUser> findByGithubId(String githubId);
 }
