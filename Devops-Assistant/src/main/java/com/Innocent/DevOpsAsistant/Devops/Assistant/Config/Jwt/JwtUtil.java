@@ -9,13 +9,14 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class JwtUtil {
     @Value("${jwt.secret}")
-    private final String SECRET;
+    private String SECRET;
 
     private final long EXPIRATION = 86400000; // 1 day
 
@@ -25,8 +26,8 @@ public class JwtUtil {
                 .setSubject(user.getGithubId()) 
                 .claim("username", user.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
-                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes()))
+                .setExpiration(new Date(EXPIRATION + System.currentTimeMillis()))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes()),SignatureAlgorithm.HS256)
                 .compact();
     }
 

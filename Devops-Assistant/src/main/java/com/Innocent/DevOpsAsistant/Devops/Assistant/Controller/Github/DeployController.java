@@ -6,15 +6,19 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CICDconfigDTO;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.CICDConfigEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.CICDConfigRepository;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubCommitService;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubService;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubWorkflowService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -26,38 +30,35 @@ public class DeployController {
     private final GithubWorkflowService workflowService;
     private final GithubCommitService commitService;
     private final OAuth2AuthorizedClientService clientService;
+    private final GithubService githubService;
 
 
     @PostMapping("/{repoId}")
     public ResponseEntity<?> deployRepo(
             @PathVariable Long repoId,
+            @Valid @RequestBody CICDconfigDTO configDTO,
             @AuthenticationPrincipal AppUser appuser
     ) {
+        CICDConfigEntity config = new CICDConfigEntity();
+        config.setProjectType(configDTO.getProjectType());
+        config.setBuildTool(configDTO.getBuildTool());
+        config.setRuntimeVersion(configDTO.getRuntimeVersion());
+        config.setBranchName(configDTO.getBranchName());
+        config.setDockerEnabled(configDTO.isDockerEnabled());
+        config.setRepo(githubService.getRepoById(repoId));
 
-        CICDConfigEntity config =
-                configRepo.findByRepoId(repoId)
-                .orElseThrow(() ->
-                    new RuntimeException("CI config not found"));
-
-         OAuth2AuthorizedClient client =
-            clientService.loadAuthorizedClient(
-                    "github",
-                    appuser.getName()
-            );
-             if (client == null) {
-        throw new RuntimeException("GitHub OAuth client not found");
-    }
 
     String accessToken =
-            client.getAccessToken().getTokenValue();
+            appuser.getGithub_token();
+            System.out.println("Access Token: " + accessToken);
 
 
         String workflow =
                 workflowService.generateWorkflow(config);
-
+        System.out.println("Workflow:\n"+workflow);
         commitService.commitWorkflow(
-                accessToken,
-                config.getRepo(),
+                appuser.getGithubId(),
+                config.getRepo(), 
                 workflow
         );
 

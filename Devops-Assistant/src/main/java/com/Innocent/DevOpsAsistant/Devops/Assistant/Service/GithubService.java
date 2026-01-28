@@ -60,7 +60,8 @@ public class GithubService {
         entity.setDescription(repoDto.getDescription());
         entity.setLanguage(repoDto.getLangauage());
         entity.setAppUser(user);
-
+        user.getRepos().add(entity);
+        appUserService.Save(user);
         log.info("Importing repository {} for user {}", repoDto.getName(), githubId);
         return gitRepoRepository.save(entity);
     }
@@ -72,5 +73,13 @@ public class GithubService {
         log.info("Fetching imported repositories for user {}", githubId);
         List<GitRepoEntity> repos = user.getRepos();
         return repos;
+    }
+
+    public GitRepoEntity getRepoById(Long repoId) {
+        Optional<GitRepoEntity> repo = gitRepoRepository.findByGithubRepoId(repoId);
+                if(repo.isEmpty()){
+                    throw new RuntimeException("Repository not found");
+                }
+        return repo.get();
     }
 }

@@ -12,6 +12,7 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.GitRepoRepository;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GitHubActionsStatusService;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CIStatusController {
 
-    private final GitRepoRepository repoRepo;
+    private final GithubService githubService;
     private final GitHubActionsStatusService statusService;
 
 
@@ -31,8 +32,7 @@ public class CIStatusController {
         String githubId = appuser.getGithubId();
 
 
-        GitRepoEntity repo = repoRepo.findById(repoId)
-            .orElseThrow(() -> new RuntimeException("Repo not found"));
+        GitRepoEntity repo = githubService.getRepoById(repoId);
 
         String status = statusService.fetchLatestCIStatus(
                 githubId,

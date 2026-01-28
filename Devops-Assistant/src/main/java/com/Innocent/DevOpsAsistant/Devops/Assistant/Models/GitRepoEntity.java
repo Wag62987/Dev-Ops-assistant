@@ -1,5 +1,7 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -38,5 +40,6 @@ private String githubRepoId;
         name = "app_user_id",   // FK column in repos table
         nullable = false
     )
+    @JsonIgnore
     private AppUser appUser;
 }

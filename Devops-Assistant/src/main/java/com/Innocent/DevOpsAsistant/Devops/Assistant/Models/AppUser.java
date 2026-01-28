@@ -3,6 +3,8 @@ package com.Innocent.DevOpsAsistant.Devops.Assistant.Models;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,6 +41,7 @@ private String githubId;
     private long OTPexpier;
    //  ONE AppUser → MANY Repos
     @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore 
     private List<GitRepoEntity> repos = new ArrayList<>();
     
     public AppUser(String githubId, String name, String username,String token) {

@@ -16,8 +16,9 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @RestController
 @RequestMapping("/repos")
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class RepoController {
 
     @GetMapping("/imported")
     public  List<GitRepoEntity> getALlImportedRepos( @AuthenticationPrincipal AppUser appuser) {
+        log.info("invking has been done!!");
         String githubId = appuser.getGithubId();
         return githubService.getImportedRepos(githubId);
     }

@@ -14,26 +14,38 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
- private final CustomSuccessHandler succesHandler;
+    private final CustomSuccessHandler successHandler;
 
     @Bean
-    public SecurityFilterChain FilterChain(HttpSecurity http){
-        http
-         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/repos/**") // 👈 important change it after testing
-        )
-                .authorizeHttpRequests(authorize->
-                        authorize
-                          .requestMatchers("/repos/import").permitAll()
-                                .anyRequest().authenticated()
-                        )
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-                .oauth2Login(oauth->
-                        oauth
-                        .successHandler(succesHandler))
-                .oauth2Client(Customizer.withDefaults());
+        http
+            // JWT APIs are stateless
+            .csrf(csrf -> csrf.disable())
+
+            .authorizeHttpRequests(auth -> auth
+                // OAuth endpoints
+                .requestMatchers(
+                    "/oauth2/**",
+                    "/login/**"
+                ).permitAll()
+
+                // JWT protected APIs
+                .requestMatchers("/repos/**","/deploy/**","/ci-status/**","/github/**").authenticated()
+
+                .anyRequest().authenticated()
+            )
+
+            // OAuth login (browser flow)
+            .oauth2Login(oauth -> oauth
+                .successHandler(successHandler)
+            )
+
+            // JWT validation (API flow)
+            .oauth2ResourceServer(oauth2 ->
+                oauth2.jwt(Customizer.withDefaults())
+            );
 
         return http.build();
     }
-    
 }
