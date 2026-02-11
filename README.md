@@ -110,7 +110,7 @@ src
 ### Clone Repository
 
 ```bash
-git clone https://github.com/your-username/devops-assistant.git
+git clone https://github.com/Wag62987/devops-assistant.git
 cd devops-assistant
 
 Build Project
