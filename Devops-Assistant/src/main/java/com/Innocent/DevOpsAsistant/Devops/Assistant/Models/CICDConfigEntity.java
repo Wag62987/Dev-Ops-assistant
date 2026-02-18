@@ -27,6 +27,11 @@ public class CICDConfigEntity {
     private String runtimeVersion;
     private String branchName;
     private boolean dockerEnabled;
+    private boolean cdEnabled;
+    private String deployHookUrl;
+    
+
+
 
     @OneToOne
     @JoinColumn(name = "repo_id", nullable = false)

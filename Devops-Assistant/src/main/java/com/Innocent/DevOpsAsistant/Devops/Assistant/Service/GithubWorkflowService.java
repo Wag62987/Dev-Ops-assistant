@@ -1,7 +1,6 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Service;
 
 import org.springframework.stereotype.Service;
-
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.CICDConfigEntity;
 
 @Service
@@ -9,25 +8,41 @@ public class GithubWorkflowService {
 
     public String generateWorkflow(CICDConfigEntity config) {
 
-        return switch (config.getProjectType()) {
-
+        String ci = switch (config.getProjectType()) {
             case "SPRING_BOOT" -> springBootWorkflow(config);
-            case "NODE"       -> nodeWorkflow(config);
-            case "REACT"      -> reactWorkflow(config);
-            case "PYTHON"     -> pythonWorkflow(config);
-
-            default -> throw new IllegalArgumentException(
-                    "Unsupported project type");
+            case "NODE", "REACT" -> nodeWorkflow(config);
+            case "PYTHON" -> pythonWorkflow(config);
+            default -> throw new IllegalArgumentException("Unsupported project type");
         };
+
+        if (!config.isCdEnabled()) {
+            return ci;
+        }
+
+        return ci + buildHookStep(config.getDeployHookUrl());
     }
 
-    // ---------------- SPRING BOOT ----------------
+    // ================= SPRING BOOT =================
 
     private String springBootWorkflow(CICDConfigEntity c) {
 
-        String buildCmd = c.getBuildTool().equals("GRADLE")
-                ? "./gradlew test"
-                : "mvn clean test";
+        String testCmd = c.getBuildTool().equals("GRADLE")
+                ? """
+                  if [ -d "src/test" ]; then
+                    ./gradlew test
+                  else
+                    echo "No tests found, skipping tests"
+                    ./gradlew build -x test
+                  fi
+                  """
+                : """
+                  if [ -d "src/test" ]; then
+                    mvn test
+                  else
+                    echo "No tests found, skipping tests"
+                    mvn package -DskipTests
+                  fi
+                  """;
 
         String dockerStep = c.isDockerEnabled() ? dockerSteps() : "";
 
@@ -53,25 +68,34 @@ public class GithubWorkflowService {
                   distribution: 'temurin'
 
               - name: Build & Test
-                run: %s
+                run: |
+        %s
         %s
         """.formatted(
                 c.getBranchName(),
                 c.getRuntimeVersion(),
-                buildCmd,
+                indent(testCmd),
                 dockerStep
         );
     }
 
-    // ---------------- NODE ----------------
+    // ================= NODE / REACT =================
 
     private String nodeWorkflow(CICDConfigEntity c) {
 
         String installCmd =
                 c.getBuildTool().equals("YARN") ? "yarn install" : "npm install";
 
+        String testCmd = """
+            if npm run | grep -q "test"; then
+              npm test -- --watch=false
+            else
+              echo "No test script found, skipping tests"
+            fi
+            """;
+
         String buildCmd =
-                c.getBuildTool().equals("YARN") ? "yarn test" : "npm test";
+                c.getBuildTool().equals("YARN") ? "yarn build" : "npm run build";
 
         return """
         name: CI Pipeline
@@ -79,6 +103,7 @@ public class GithubWorkflowService {
         on:
           push:
             branches: [%s]
+          pull_request:
 
         jobs:
           build:
@@ -96,22 +121,21 @@ public class GithubWorkflowService {
                 run: %s
 
               - name: Run Tests
+                run: |
+        %s
+
+              - name: Build App
                 run: %s
         """.formatted(
                 c.getBranchName(),
                 c.getRuntimeVersion(),
                 installCmd,
+                indent(testCmd),
                 buildCmd
         );
     }
 
-    // ---------------- REACT ----------------
-
-    private String reactWorkflow(CICDConfigEntity c) {
-        return nodeWorkflow(c); // same logic
-    }
-
-    // ---------------- PYTHON ----------------
+    // ================= PYTHON =================
 
     private String pythonWorkflow(CICDConfigEntity c) {
 
@@ -121,6 +145,7 @@ public class GithubWorkflowService {
         on:
           push:
             branches: [%s]
+          pull_request:
 
         jobs:
           build:
@@ -135,17 +160,22 @@ public class GithubWorkflowService {
                   python-version: '%s'
 
               - name: Install dependencies
-                run: pip install -r requirements.txt
+                run: pip install -r requirements.txt || true
 
               - name: Run Tests
-                run: pytest
+                run: |
+                  if [ -d "tests" ]; then
+                    pytest
+                  else
+                    echo "No tests found, skipping tests"
+                  fi
         """.formatted(
                 c.getBranchName(),
                 c.getRuntimeVersion()
         );
     }
 
-    // ---------------- DOCKER ----------------
+    // ================= DOCKER =================
 
     private String dockerSteps() {
         return """
@@ -153,5 +183,20 @@ public class GithubWorkflowService {
                 run: docker build -t app:latest .
         """;
     }
-}
 
+    // ================= CD BUILD HOOK =================
+
+    private String buildHookStep(String hookUrl) {
+        return """
+              - name: Trigger Hosting Build
+                if: success()
+                run: curl -X POST %s
+        """.formatted(hookUrl);
+    }
+
+    // ================= UTIL =================
+
+    private String indent(String script) {
+        return script.replaceAll("(?m)^", "                ");
+    }
+}

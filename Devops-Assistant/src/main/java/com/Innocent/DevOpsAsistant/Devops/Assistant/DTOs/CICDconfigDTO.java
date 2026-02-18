@@ -20,5 +20,10 @@ public class CICDconfigDTO {
     private String branchName;
     @NotNull(message = "Docker enabled flag is required")
     private boolean dockerEnabled;
+    @NotNull(message = "cd enabled flag is required")
+    private boolean cdEnabled;
+    @NotBlank(message="Bulid hook Url is needed")
+    private String deployHookUrl;
+    
   
 }   

@@ -25,5 +25,4 @@ public class GitRepo {
     private String star;
     private String langauage;
 
-
 }
