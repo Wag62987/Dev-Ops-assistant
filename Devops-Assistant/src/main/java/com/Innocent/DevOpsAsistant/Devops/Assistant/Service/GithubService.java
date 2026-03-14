@@ -60,8 +60,6 @@ public class GithubService {
         entity.setDescription(repoDto.getDescription());
         entity.setLanguage(repoDto.getLangauage());
         entity.setAppUser(user);
-        user.getRepos().add(entity);
-        appUserService.Save(user);
         log.info("Importing repository {} for user {}", repoDto.getName(), githubId);
         return gitRepoRepository.save(entity);
     }

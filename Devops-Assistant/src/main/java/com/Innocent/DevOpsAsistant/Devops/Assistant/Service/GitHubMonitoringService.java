@@ -43,28 +43,31 @@ public class GitHubMonitoringService {
 
         for (Map run : runs) {
 
-            String status = (String) run.get("status");
-            String conclusion = (String) run.get("conclusion");
+    String status = (String) run.get("status");
+    String conclusion = (String) run.get("conclusion");
 
-            String finalStatus;
+    String finalStatus;
 
-            if ("completed".equals(status) && "success".equals(conclusion)) {
-                finalStatus = "SUCCESS";
-            }
-            else if ("completed".equals(status) && "failure".equals(conclusion)) {
-                finalStatus = "FAILED";
-            }
-            else {
-                finalStatus = "RUNNING";
-            }
+    if ("completed".equals(status) && "success".equals(conclusion)) {
+        finalStatus = "SUCCESS";
+    }
+    else if ("completed".equals(status) && "failure".equals(conclusion)) {
+        finalStatus = "FAILED";
+    }
+    else {
+        finalStatus = "RUNNING";
+    }
 
-            result.add(
-                Map.of(
-                    "commit", run.get("head_sha"),
-                    "branch", run.get("head_branch"),
-                    "status", finalStatus
-                )
-            );
+    String startedAt = (String) run.get("run_started_at");
+
+    result.add(
+        Map.of(
+            "commit", run.get("head_sha"),
+            "branch", run.get("head_branch"),
+            "status", finalStatus,
+            "date", startedAt
+        )
+    );
         }
 
         return result;

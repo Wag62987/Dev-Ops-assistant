@@ -1,6 +1,5 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
