@@ -4,11 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.GitRepo;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
@@ -18,6 +14,7 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @Slf4j
 @RestController
 @RequestMapping("/repos")
@@ -26,24 +23,63 @@ public class RepoController {
 
     private final GithubService githubService;
 
+    // 🔥 GET IMPORTED REPOS
     @GetMapping("/imported")
-    public  List<GitRepoEntity> getALlImportedRepos( @AuthenticationPrincipal AppUser appuser) {
-        log.info("invking has been done!!");
-        String githubId = appuser.getGithubId();
-        return githubService.getImportedRepos(githubId);
-    }
-    
+    public ResponseEntity<?> getAllImportedRepos(
+            @AuthenticationPrincipal AppUser appuser) {
 
+        if (appuser == null) {
+            return ResponseEntity
+                    .status(401)
+                    .body("User not authenticated");
+        }
+
+        try {
+            String githubId = appuser.getGithubId();
+            List<GitRepoEntity> repos =
+                    githubService.getImportedRepos(githubId);
+
+            return ResponseEntity.ok(repos);
+
+        } catch (Exception e) {
+            log.error("Error fetching imported repos", e);
+            return ResponseEntity
+                    .status(500)
+                    .body("Failed to fetch repositories");
+        }
+    }
+
+    // 🔥 IMPORT REPO
     @PostMapping("/import")
     public ResponseEntity<?> importRepo(
             @AuthenticationPrincipal AppUser appuser,
             @RequestBody GitRepo repo) {
+ System.out.println("hit import endpoint with repo: " + repo.getName());
+        if (appuser == null) {
+            return ResponseEntity
+                    .status(401)
+                    .body("User not authenticated");
+        }
 
-        String githubId = appuser.getGithubId();
+        if (repo == null || repo.getId() == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Invalid repository data");
+        }
 
-         GitRepoEntity saved = githubService.importRepo(githubId, repo);
+        try {
+            String githubId = appuser.getGithubId();
 
-        return ResponseEntity.ok(saved);
+            GitRepoEntity saved =
+                    githubService.importRepo(githubId, repo);
+
+            return ResponseEntity.ok(saved);
+
+        } catch (Exception e) {
+            log.error("Error importing repo", e);
+            return ResponseEntity
+                    .status(500)
+                    .body("Failed to import repository");
+        }
     }
 }
-

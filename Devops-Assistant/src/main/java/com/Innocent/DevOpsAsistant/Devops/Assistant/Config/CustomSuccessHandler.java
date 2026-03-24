@@ -85,7 +85,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addCookie(cookie);
         response.setHeader("Authorization", "Bearer " + jwtToken);
 
-        response.sendRedirect("/github/userRepos");
+        response.sendRedirect("http://localhost:5173/dashboard");
 
     }
 }

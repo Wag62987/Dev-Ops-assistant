@@ -21,7 +21,7 @@ public class CIMonitoringController {
 
     @GetMapping("/{repoId}")
     public ResponseEntity<?> monitor(
-            @PathVariable Long repoId,
+            @PathVariable String repoId,
             @AuthenticationPrincipal AppUser user) {
 
         GitRepoEntity repo = githubService.getRepoById(repoId);

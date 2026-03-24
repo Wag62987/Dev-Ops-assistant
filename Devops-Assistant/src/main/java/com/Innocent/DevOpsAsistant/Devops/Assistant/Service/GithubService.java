@@ -73,7 +73,7 @@ public class GithubService {
         return repos;
     }
 
-    public GitRepoEntity getRepoById(Long repoId) {
+    public GitRepoEntity getRepoById(String repoId) {
         Optional<GitRepoEntity> repo = gitRepoRepository.findByGithubRepoId(repoId);
                 if(repo.isEmpty()){
                     throw new RuntimeException("Repository not found");

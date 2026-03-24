@@ -37,7 +37,7 @@ public class DeployController {
 
     @PostMapping("/{repoId}")
     public ResponseEntity<?> deployRepo(
-            @PathVariable Long repoId,
+            @PathVariable String repoId,
             @Valid @RequestBody CICDconfigDTO configDTO,
             @AuthenticationPrincipal AppUser appuser
     ) {
@@ -51,7 +51,7 @@ public class DeployController {
         config.setDeployHookUrl(configDTO.getDeployHookUrl());
         config.setRepo(githubService.getRepoById(repoId));
 
-
+        System.out.println("Received deployment request for repo ID: " + repoId);
     String accessToken =
             appuser.getGithub_token();
             System.out.println("Access Token: " + accessToken);

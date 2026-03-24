@@ -172,9 +172,9 @@ when(requestHeadersSpec.headers(any()))
     @Test
     @DisplayName("getRepoById: should return repo when found")
     void getRepoById_shouldReturnRepo_whenFound() {
-        when(gitRepoRepository.findByGithubRepoId(1L)).thenReturn(Optional.of(mockRepoEntity));
+        when(gitRepoRepository.findByGithubRepoId("1L")).thenReturn(Optional.of(mockRepoEntity));
 
-        GitRepoEntity result = githubService.getRepoById(1L);
+        GitRepoEntity result = githubService.getRepoById("1L");
 
         assertThat(result).isNotNull();
         assertThat(result.getRepoName()).isEqualTo("my-repo");
@@ -183,9 +183,9 @@ when(requestHeadersSpec.headers(any()))
     @Test
     @DisplayName("getRepoById: should throw RuntimeException when not found")
     void getRepoById_shouldThrow_whenNotFound() {
-        when(gitRepoRepository.findByGithubRepoId(99L)).thenReturn(Optional.empty());
+        when(gitRepoRepository.findByGithubRepoId("99L")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> githubService.getRepoById(99L))
+        assertThatThrownBy(() -> githubService.getRepoById("99L"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Repository not found");
     }

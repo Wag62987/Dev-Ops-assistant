@@ -27,7 +27,7 @@ public class CIStatusController {
 
     @GetMapping("/{repoId}")
     public ResponseEntity<?> getStatus(
-            @PathVariable Long repoId,
+            @PathVariable String repoId,
             @AuthenticationPrincipal AppUser appuser) {
 
        

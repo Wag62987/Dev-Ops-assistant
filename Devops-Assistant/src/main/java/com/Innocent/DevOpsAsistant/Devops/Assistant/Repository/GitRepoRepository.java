@@ -15,6 +15,6 @@ public interface GitRepoRepository extends JpaRepository<GitRepoEntity, Long> {
 
     List<GitRepoEntity> findByAppUser_GithubId(String githubId);
 
-    public Optional<GitRepoEntity> findByGithubRepoId(Long repoId);
+    public Optional<GitRepoEntity> findByGithubRepoId(String repoId);
 }
 
