@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.WorkflowRunsResponse;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GitHubMonitoringService;
@@ -20,18 +21,18 @@ public class CIMonitoringController {
     private final GitHubMonitoringService monitoringService;
 
     @GetMapping("/{repoId}")
-    public ResponseEntity<?> monitor(
-            @PathVariable String repoId,
-            @AuthenticationPrincipal AppUser user) {
+    public ResponseEntity<WorkflowRunsResponse> monitor(
+        @PathVariable String repoId,
+        @AuthenticationPrincipal AppUser user) {
 
-        GitRepoEntity repo = githubService.getRepoById(repoId);
+    GitRepoEntity repo = githubService.getRepoById(repoId);
 
-        Object runs = monitoringService.getWorkflowRuns(
-                user.getUsername(),
-                repo,
-                user.getGithub_token()
-        );
+    WorkflowRunsResponse response = monitoringService.getWorkflowRuns(
+            user.getUsername(),
+            repo,
+            user.getGithub_token()
+    );
 
-        return ResponseEntity.ok(runs);
+    return ResponseEntity.ok(response);
     }
 }

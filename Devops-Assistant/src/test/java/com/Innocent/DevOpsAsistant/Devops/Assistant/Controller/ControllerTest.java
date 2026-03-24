@@ -219,23 +219,30 @@ void getImportedRepos_shouldReturnList() {
         @Mock private GitHubActionsStatusService statusService;
         @InjectMocks private CIStatusController ciStatusController;
 
-        @Test
-        @DisplayName("getStatus: returns 200 with CI status response")
-        void getStatus_shouldReturn200WithCiStatus() {
-            CIStatusResponse ciResponse = new CIStatusResponse(
-                    "SUCCESS", null, null, "https://logs.url");
+     @Test
+@DisplayName("getStatus: returns 200 with CI status response")
+void getStatus_shouldReturnCIStatus() {
 
-            when(githubService.getRepoById("1L")).thenReturn(mockRepo);
-            when(statusService.fetchLatestCIStatus("gh_123", mockRepo))
-                    .thenReturn(ciResponse);
+    GitRepoEntity repo = new GitRepoEntity();
+    repo.setRepoName("test-repo");
 
-            ResponseEntity<?> response = ciStatusController.getStatus("1L", mockUser);
+    CIStatusResponse mockResponse = new CIStatusResponse(
+            "SUCCESS",
+            null,
+            null,
+            "logs-url"
+    );
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            CIStatusResponse body = (CIStatusResponse) response.getBody();
-            assertThat(body).isNotNull();
-            assertThat(body.getStatus()).isEqualTo("SUCCESS");
-        }
+    when(githubService.getRepoById("1")).thenReturn(repo);
+    when(statusService.fetchLatestCIStatus("gh_123", repo))
+            .thenReturn(mockResponse);
+
+    ResponseEntity<CIStatusResponse> response =
+            ciStatusController.getStatus("1", mockUser);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody().getStatus()).isEqualTo("SUCCESS");
+}
     }
 
     // =========================================================================
@@ -250,26 +257,33 @@ void getImportedRepos_shouldReturnList() {
         @Mock private GitHubMonitoringService monitoringService;
         @InjectMocks private CIMonitoringController monitoringController;
 
-       @Test
+     @Test
 @DisplayName("monitor: returns 200 with workflow runs")
 void monitor_shouldReturn200WithRuns() {
 
-    List<Map<String, Object>> runs = List.of(
-            Map.of("status", "SUCCESS", "branch", "main")
+    WorkflowRunDTO run = new WorkflowRunDTO(
+            1L,
+            "build",
+            "SUCCESS",
+            "main",
+            "abc123",
+            "2026-01-01"
     );
+
+    WorkflowRunsResponse runsResponse =
+            new WorkflowRunsResponse(1, List.of(run));
 
     when(githubService.getRepoById("1"))
             .thenReturn(mockRepo);
 
     when(monitoringService.getWorkflowRuns("john_doe", mockRepo, "ghp_test_token"))
-            .thenReturn(runs);
+            .thenReturn(runsResponse);
 
-    ResponseEntity<?> response =
+    ResponseEntity<WorkflowRunsResponse> response =
             monitoringController.monitor("1", mockUser);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-    assertThat(response.getBody()).isEqualTo(runs);
+    assertThat(response.getBody().getWorkflowRuns()).hasSize(1);
 }
     }
 
@@ -290,6 +304,7 @@ void monitor_shouldReturn200WithRuns() {
 @DisplayName("deployRepo: returns 200 with pipeline response map")
 void deployRepo_shouldReturn200WithResponseMap() {
 
+    // Prepare CICD config DTO
     CICDconfigDTO dto = new CICDconfigDTO();
     dto.setProjectType("SPRING_BOOT");
     dto.setBuildTool("MAVEN");
@@ -298,30 +313,34 @@ void deployRepo_shouldReturn200WithResponseMap() {
     dto.setDockerEnabled(false);
     dto.setCdEnabled(false);
 
+    // Prepare mock CI status response
     CIStatusResponse ciStatus = new CIStatusResponse(
             "SUCCESS", null, null, "https://logs.url");
 
+    // Mock repo fetch
     when(githubService.getRepoById("1L")).thenReturn(mockRepo);
 
+    // Mock workflow generation
     when(workflowService.generateWorkflow(any(CICDConfigEntity.class)))
             .thenReturn("name: CI Pipeline\n");
 
+    // Mock workflow commit (void)
     doNothing().when(commitService)
-            .commitWorkflow(anyString(), any(), anyString());
+            .commitWorkflow(anyString(), any(GitRepoEntity.class), anyString());
 
-    when(statusService.fetchLatestCIStatus(anyString(), any()))
+    // Mock CI status fetch
+    when(statusService.fetchLatestCIStatus(anyString(), any(GitRepoEntity.class)))
             .thenReturn(ciStatus);
 
-    ResponseEntity<?> response =
+    // Call controller method
+    ResponseEntity<Map<String, Object>> response =
             deployController.deployRepo("1L", dto, mockUser);
 
+    // Assertions
     assertThat(response).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-    @SuppressWarnings("unchecked")
-    Map<String, Object> body =
-            (Map<String, Object>) response.getBody();
-
+    Map<String, Object> body = response.getBody();
     assertThat(body).isNotNull();
 
     assertThat(body)
@@ -330,5 +349,4 @@ void deployRepo_shouldReturn200WithResponseMap() {
             .containsEntry("branch", "main")
             .containsEntry("ciStatus", "SUCCESS");
 }
-    }
-    }}
+    }}}

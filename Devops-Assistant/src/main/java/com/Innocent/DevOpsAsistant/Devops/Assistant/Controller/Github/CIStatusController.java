@@ -25,20 +25,20 @@ public class CIStatusController {
     private final GitHubActionsStatusService statusService;
 
 
+   
     @GetMapping("/{repoId}")
-    public ResponseEntity<?> getStatus(
-            @PathVariable String repoId,
-            @AuthenticationPrincipal AppUser appuser) {
+public ResponseEntity<CIStatusResponse> getStatus(
+        @PathVariable String repoId,
+        @AuthenticationPrincipal AppUser appuser) {
 
-       
-        GitRepoEntity repo = githubService.getRepoById(repoId);
+    GitRepoEntity repo = githubService.getRepoById(repoId);
 
-        CIStatusResponse response =
-                statusService.fetchLatestCIStatus(
-                        appuser.getGithubId(),
-                        repo
-                );
+    CIStatusResponse response =
+            statusService.fetchLatestCIStatus(
+                    appuser.getGithubId(),
+                    repo
+            );
 
-        return ResponseEntity.ok(response);
-    }
+    return ResponseEntity.ok(response);
+}
 }

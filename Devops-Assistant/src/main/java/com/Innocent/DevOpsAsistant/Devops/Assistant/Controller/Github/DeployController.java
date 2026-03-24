@@ -35,42 +35,30 @@ public class DeployController {
     private final GithubService githubService;
 
 
-    @PostMapping("/{repoId}")
-    public ResponseEntity<?> deployRepo(
-            @PathVariable String repoId,
-            @Valid @RequestBody CICDconfigDTO configDTO,
-            @AuthenticationPrincipal AppUser appuser
-    ) {
-        CICDConfigEntity config = new CICDConfigEntity();
-        config.setProjectType(configDTO.getProjectType());
-        config.setBuildTool(configDTO.getBuildTool());
-        config.setRuntimeVersion(configDTO.getRuntimeVersion());
-        config.setBranchName(configDTO.getBranchName());
-        config.setDockerEnabled(configDTO.isDockerEnabled());
-         config.setCdEnabled(configDTO.isCdEnabled());
-        config.setDeployHookUrl(configDTO.getDeployHookUrl());
-        config.setRepo(githubService.getRepoById(repoId));
+  public ResponseEntity<Map<String, Object>> deployRepo(
+        @PathVariable String repoId,
+        @Valid @RequestBody CICDconfigDTO configDTO,
+        @AuthenticationPrincipal AppUser appuser
+) {
+    CICDConfigEntity config = new CICDConfigEntity();
+    config.setProjectType(configDTO.getProjectType());
+    config.setBuildTool(configDTO.getBuildTool());
+    config.setRuntimeVersion(configDTO.getRuntimeVersion());
+    config.setBranchName(configDTO.getBranchName());
+    config.setDockerEnabled(configDTO.isDockerEnabled());
+    config.setCdEnabled(configDTO.isCdEnabled());
 
-        System.out.println("Received deployment request for repo ID: " + repoId);
-    String accessToken =
-            appuser.getGithub_token();
-            System.out.println("Access Token: " + accessToken);
-            
-     GitRepoEntity repo=config.getRepo();
+    GitRepoEntity repo = githubService.getRepoById(repoId);
 
-        String workflow =
-                workflowService.generateWorkflow(config);
-        System.out.println("Workflow:\n"+workflow);
-        commitService.commitWorkflow(
-                appuser.getGithubId(),
-                config.getRepo(), 
-                workflow
-        );
-        CIStatusResponse ciStatus =
-                statusService.fetchLatestCIStatus(
-                        appuser.getGithubId(),
-                        repo
-                );
+    // Generate workflow
+    String workflowContent = workflowService.generateWorkflow(config);
+
+    // Commit workflow
+    commitService.commitWorkflow(appuser.getGithub_token(), repo, workflowContent);
+
+    // Fetch CI/CD status
+    CIStatusResponse ciStatus = statusService.fetchLatestCIStatus(appuser.getGithubId(), repo);
+
                 Map<String, Object> response = new HashMap<>();
                 response.put("message", "CI/CD pipeline triggered");
                 response.put("repository", repo.getRepoName());
