@@ -2,6 +2,8 @@ package com.Innocent.DevOpsAsistant.Devops.Assistant.Controller.Github;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -82,4 +84,16 @@ public class RepoController {
                     .body("Failed to import repository");
         }
     }
+    @DeleteMapping("/{repoId}")
+    public ResponseEntity<GitRepoEntity> DeleteRepo(@PathVariable String repoId){
+        GitRepoEntity repo=githubService.DeleteRepo(repoId);
+     return ResponseEntity.ok(repo);
+    }
+   @DeleteMapping("/deleteAll")
+public ResponseEntity<String> DeleteALLRepo(@AuthenticationPrincipal AppUser appuser){
+   if(githubService.DeleteAllRepo(appuser)){
+        return ResponseEntity.ok("success");   
+   }
+   return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Failed");
+}
 }

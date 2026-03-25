@@ -189,4 +189,41 @@ when(requestHeadersSpec.headers(any()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Repository not found");
     }
+
+    // ─── DeleteRepo ──────────────────────────────────────────────
+@Test
+@DisplayName("DeleteRepo: should delete and return the repo when found")
+void deleteRepo_shouldReturnDeletedRepo_whenExists() {
+    when(gitRepoRepository.findByGithubRepoId("1001")).thenReturn(Optional.of(mockRepoEntity));
+
+    GitRepoEntity deleted = githubService.DeleteRepo("1001");
+
+    assertThat(deleted).isNotNull();
+    assertThat(deleted.getRepoName()).isEqualTo("my-repo");
+    verify(gitRepoRepository).delete(mockRepoEntity);
+}
+
+@Test
+@DisplayName("DeleteRepo: should throw RuntimeException when repo not found")
+void deleteRepo_shouldThrow_whenRepoMissing() {
+    when(gitRepoRepository.findByGithubRepoId("9999")).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> githubService.DeleteRepo("9999"))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Repository not found");
+
+    verify(gitRepoRepository, never()).delete(any());
+}
+
+// ─── DeleteAllRepo ─────────────────────────────────────────
+@Test
+@DisplayName("DeleteAllRepo: should delete all user's repos")
+void deleteAllRepo_shouldReturnTrue() {
+    mockUser.setRepos(List.of(mockRepoEntity));
+    
+    Boolean result = githubService.DeleteAllRepo(mockUser);
+
+    assertThat(result).isTrue();
+    verify(gitRepoRepository).delete(mockRepoEntity);
+}
 }

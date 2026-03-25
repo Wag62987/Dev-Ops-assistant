@@ -80,4 +80,24 @@ public class GithubService {
                 }
         return repo.get();
     }
+    public GitRepoEntity DeleteRepo(String repoId){
+
+         Optional<GitRepoEntity> repo = gitRepoRepository.findByGithubRepoId(repoId);
+                if(repo.isEmpty()){
+                    throw new RuntimeException("Repository not found");
+                }
+                GitRepoEntity deletedRepo=repo.get();
+                gitRepoRepository.delete(deletedRepo);
+                
+        return deletedRepo;
+    }
+    public Boolean DeleteAllRepo(AppUser appuser) {
+        // TODO Auto-generated method stub
+      List<GitRepoEntity> Allrepo=appuser.getRepos();
+
+      for( GitRepoEntity repo : Allrepo){
+            gitRepoRepository.delete(repo);
+      }
+      return true;
+    }
 }
