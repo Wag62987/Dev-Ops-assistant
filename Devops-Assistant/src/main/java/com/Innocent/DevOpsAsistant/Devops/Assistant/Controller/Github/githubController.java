@@ -34,8 +34,7 @@ public class githubController {
             List<GitRepo> repos=githubService.getUserRepos(githubId);
             
             log.info("Fetched {} repositories for user {}", repos.size(), githubId);
-            repos.forEach(repo -> 
-                System.out.println("Repo Name: " + repo.getName()));
+           
             return ResponseEntity.ok(repos);
         }
         catch(UserNotFound e){

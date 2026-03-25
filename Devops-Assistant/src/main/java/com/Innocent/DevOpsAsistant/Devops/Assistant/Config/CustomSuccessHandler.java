@@ -76,7 +76,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         userService.Save(user);
 
         String jwtToken = jwtUtil.generateToken(user);
-        log.info("Generated JWT Token for user {}: {}", username, jwtToken);
+        // log.info("Generated JWT Token for user {}: {}", username, jwtToken);
         Cookie cookie = new Cookie("JWT_TOKEN", jwtToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true); 
@@ -84,7 +84,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         cookie.setMaxAge(24 * 60 * 60); // 1 day
         response.addCookie(cookie);
         response.setHeader("Authorization", "Bearer " + jwtToken);
-
+        log.info("User {} authenticated successfully. JWT token set in cookie and header.", username);
         response.sendRedirect("http://localhost:5173/dashboard");
 
     }

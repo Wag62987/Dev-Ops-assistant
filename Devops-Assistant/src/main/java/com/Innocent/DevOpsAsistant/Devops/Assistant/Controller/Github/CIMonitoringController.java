@@ -32,6 +32,7 @@ public class CIMonitoringController {
             repo,
             user.getGithub_token()
     );
+    System.out.println(response.getTotalCount());
 
     return ResponseEntity.ok(response);
     }

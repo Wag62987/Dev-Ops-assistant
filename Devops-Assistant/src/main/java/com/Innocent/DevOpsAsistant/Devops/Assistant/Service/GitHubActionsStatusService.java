@@ -10,7 +10,6 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CIStatusResponse;
 import lombok.RequiredArgsConstructor;
-import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 @RequiredArgsConstructor

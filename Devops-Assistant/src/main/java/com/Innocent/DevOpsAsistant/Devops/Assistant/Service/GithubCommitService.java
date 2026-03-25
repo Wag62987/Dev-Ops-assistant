@@ -25,6 +25,7 @@ public class GithubCommitService {
             GitRepoEntity repo,
             String workflowContent
     ) {
+        System.out.println(githubId);
          AppUser user = appUserService.FindById(githubId)
             .orElseThrow(() -> new RuntimeException("User not found"));
 

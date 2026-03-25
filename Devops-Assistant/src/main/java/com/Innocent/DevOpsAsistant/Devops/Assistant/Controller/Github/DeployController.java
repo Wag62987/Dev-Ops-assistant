@@ -34,7 +34,7 @@ public class DeployController {
     private final GitHubActionsStatusService statusService;
     private final GithubService githubService;
 
-
+ @PostMapping("/{repoId}")
   public ResponseEntity<Map<String, Object>> deployRepo(
         @PathVariable String repoId,
         @Valid @RequestBody CICDconfigDTO configDTO,
@@ -47,14 +47,15 @@ public class DeployController {
     config.setBranchName(configDTO.getBranchName());
     config.setDockerEnabled(configDTO.isDockerEnabled());
     config.setCdEnabled(configDTO.isCdEnabled());
+    config.setDeployHookUrl(configDTO.getDeployHookUrl());
 
     GitRepoEntity repo = githubService.getRepoById(repoId);
 
     // Generate workflow
     String workflowContent = workflowService.generateWorkflow(config);
-
+ 
     // Commit workflow
-    commitService.commitWorkflow(appuser.getGithub_token(), repo, workflowContent);
+    commitService.commitWorkflow(appuser.getGithubId(), repo, workflowContent);
 
     // Fetch CI/CD status
     CIStatusResponse ciStatus = statusService.fetchLatestCIStatus(appuser.getGithubId(), repo);
