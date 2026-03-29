@@ -78,7 +78,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String jwtToken = jwtUtil.generateToken(user);
         log.info("Generated JWT Token for user {}: {}", username, jwtToken);
         Cookie cookie = new Cookie("JWT_TOKEN", jwtToken);
-        cookie.setHttpOnly(true);
+        cookie.setHttpOnly(false);
         cookie.setSecure(true); 
         cookie.setPath("/");     
         cookie.setMaxAge(24 * 60 * 60); // 1 day
