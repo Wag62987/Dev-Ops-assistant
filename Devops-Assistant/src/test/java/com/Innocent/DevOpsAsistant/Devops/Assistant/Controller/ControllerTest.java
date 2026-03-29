@@ -209,6 +209,91 @@ void deleteAllRepo_shouldReturnNoContent_whenFails() {
     assertThat(response.getStatusCodeValue()).isEqualTo(204);
     assertThat(response.getBody()).isEqualTo("Failed");
 }
+@Test
+@DisplayName("importRepo: returns 200 when repo is imported successfully")
+void importRepo_shouldReturn200() {
+
+    GitRepo dto = GitRepo.builder()
+            .id("101")
+            .name("new-repo")
+            .build();
+
+    when(githubService.importRepo("gh_123", dto))
+            .thenReturn(mockRepo);
+
+    ResponseEntity<?> response =
+            repoController.importRepo(mockUser, dto);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isEqualTo(mockRepo);
+}
+@Test
+@DisplayName("importRepo: returns 401 when user is null")
+void importRepo_shouldReturn401_whenUserNull() {
+
+    GitRepo dto = GitRepo.builder()
+            .id("101")
+            .name("new-repo")
+            .build();
+
+    ResponseEntity<?> response =
+            repoController.importRepo(null, dto);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+}
+@Test
+@DisplayName("importRepo: returns 400 when repo data is invalid")
+void importRepo_shouldReturn400_whenInvalidRepo() {
+
+    ResponseEntity<?> response =
+            repoController.importRepo(mockUser, new GitRepo());
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+}
+@Test
+@DisplayName("importRepo: returns 500 when service throws exception")
+void importRepo_shouldReturn500_whenException() {
+
+    GitRepo dto = GitRepo.builder()
+            .id("101")
+            .name("new-repo")
+            .build();
+
+    when(githubService.importRepo(anyString(), any()))
+            .thenThrow(new RuntimeException("Error"));
+
+    ResponseEntity<?> response =
+            repoController.importRepo(mockUser, dto);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+}
+@Test
+@DisplayName("getActiveRepo: returns 200 with total and active repo count")
+void getActiveRepo_shouldReturn200() throws UserNotFound {
+
+    ActiveRepo activeRepo = new ActiveRepo(5, 3L);
+
+    when(githubService.countAllActiveRepos("gh_123"))
+            .thenReturn(activeRepo);
+
+    ResponseEntity<ActiveRepo> response =
+            repoController.getActiveRepo(mockUser);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().getTotalCount()).isEqualTo(5);
+    assertThat(response.getBody().getActiveRepo()).isEqualTo(3L);
+}
+@Test
+@DisplayName("getActiveRepo: returns 401 when user is null")
+void getActiveRepo_shouldReturn401_whenUserNull() throws UserNotFound {
+
+    ResponseEntity<ActiveRepo> response =
+            repoController.getActiveRepo(null);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+}
     }
 
     // =========================================================================
@@ -245,6 +330,21 @@ void deleteAllRepo_shouldReturnNoContent_whenFails() {
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody().getStatus()).isEqualTo("SUCCESS");
+        }
+        @Test
+        @DisplayName("getRunningPipelines: returns pipeline count")
+        void getRunningPipelines_shouldReturnCount() {
+
+            PipelineCount count = new PipelineCount(3);
+
+            when(statusService.getRunningPipelineStats("gh_123"))
+                    .thenReturn(count);
+
+            PipelineCount response =
+                    ciStatusController.getRunningPipelines(mockUser);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getRunningPipelines()).isEqualTo(3);
         }
     }
 

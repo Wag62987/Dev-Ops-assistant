@@ -1,11 +1,14 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.ActiveRepo;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.GitRepo;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Exception.UserNotFound;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
@@ -58,7 +61,7 @@ public class GithubService {
         entity.setRepoName(repoDto.getName());
         entity.setRepoUrl(repoDto.getHtmlUrl());
         entity.setDescription(repoDto.getDescription());
-        entity.setLanguage(repoDto.getLangauage());
+        entity.setLanguage(repoDto.getLanguage());
         entity.setAppUser(user);
         log.info("Importing repository {} for user {}", repoDto.getName(), githubId);
         return gitRepoRepository.save(entity);
@@ -100,4 +103,28 @@ public class GithubService {
       }
       return true;
     }
+
+
+public ActiveRepo countAllActiveRepos(String githubId) throws UserNotFound {
+
+    List<GitRepo> repos = getUserRepos(githubId); // already fetching from GitHub
+
+    LocalDateTime now = LocalDateTime.now();
+
+    long activeCount= repos.stream()
+            .filter(repo -> {
+                try {
+                    LocalDateTime pushedAt = LocalDateTime.parse(repo.getPushed_at().replace("Z", ""));
+                    long days = Duration.between(pushedAt, now).toDays();
+                    return days <= 30; // active condition
+                } catch (Exception e) {
+                    return false;
+                }
+            })
+            .count();
+             int totalCount = repos.size();
+
+             return new ActiveRepo(totalCount, activeCount);
+
+}
 }

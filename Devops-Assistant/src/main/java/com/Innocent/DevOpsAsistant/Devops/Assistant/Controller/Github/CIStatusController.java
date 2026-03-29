@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CIStatusResponse;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.PipelineCount;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GitHubActionsStatusService;
@@ -40,5 +41,11 @@ public ResponseEntity<CIStatusResponse> getStatus(
             );
 
     return ResponseEntity.ok(response);
+}
+
+@GetMapping("/pipelines/running/")
+public PipelineCount getRunningPipelines(@AuthenticationPrincipal AppUser user) {
+    String githubId = user.getGithubId();
+    return statusService.getRunningPipelineStats(githubId);
 }
 }

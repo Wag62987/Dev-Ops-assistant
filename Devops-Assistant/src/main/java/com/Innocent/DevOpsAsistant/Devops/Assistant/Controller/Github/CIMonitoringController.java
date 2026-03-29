@@ -36,4 +36,5 @@ public class CIMonitoringController {
 
     return ResponseEntity.ok(response);
     }
+
 }

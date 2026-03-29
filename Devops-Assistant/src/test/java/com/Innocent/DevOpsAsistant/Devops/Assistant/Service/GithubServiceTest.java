@@ -1,5 +1,6 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Service;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.ActiveRepo;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.GitRepo;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Exception.UserNotFound;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +54,7 @@ class GithubServiceTest {
                 .name("my-repo")
                 .htmlUrl("https://github.com/john_doe/my-repo")
                 .description("A test repo")
-                .langauage("Java")
+                .language("Java")
                 .build();
 
         mockRepoEntity = new GitRepoEntity();
@@ -226,4 +228,122 @@ void deleteAllRepo_shouldReturnTrue() {
     assertThat(result).isTrue();
     verify(gitRepoRepository).delete(mockRepoEntity);
 }
+
+
+@Test
+@DisplayName("countAllActiveRepos: should return correct total and active repo count")
+@SuppressWarnings({"unchecked", "rawtypes"})
+void countAllActiveRepos_shouldReturnCounts() throws UserNotFound {
+
+    // Mock user
+    when(appUserService.FindById("gh_123")).thenReturn(Optional.of(mockUser));
+
+    // Prepare repo data
+    GitRepo activeRepo = GitRepo.builder()
+            .id("1")
+            .name("active-repo")
+            .pushed_at(LocalDateTime.now().minusDays(10).toString()) // active
+            .build();
+
+    GitRepo inactiveRepo = GitRepo.builder()
+            .id("2")
+            .name("inactive-repo")
+            .pushed_at(LocalDateTime.now().minusDays(40).toString()) // inactive
+            .build();
+
+    // Mock WebClient flow
+    when(githubClient.get())
+            .thenReturn((WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
+
+    when(requestHeadersUriSpec.uri(anyString()))
+            .thenAnswer(inv -> requestHeadersSpec);
+
+    when(requestHeadersSpec.headers(any()))
+            .thenAnswer(inv -> requestHeadersSpec);
+
+    when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+
+    when(responseSpec.bodyToFlux(GitRepo.class))
+            .thenReturn(Flux.just(activeRepo, inactiveRepo));
+
+    // Call method
+    ActiveRepo result = githubService.countAllActiveRepos("gh_123");
+
+    // Assertions
+    assertThat(result).isNotNull();
+    assertThat(result.getTotalCount()).isEqualTo(2);   // total repos
+    assertThat(result.getActiveRepo()).isEqualTo(1L);  // only 1 active
+}
+
+@Test
+@DisplayName("countAllActiveRepos: should return zero active repos")
+@SuppressWarnings({"unchecked", "rawtypes"})
+void countAllActiveRepos_shouldReturnZeroActive() throws UserNotFound {
+
+    when(appUserService.FindById("gh_123")).thenReturn(Optional.of(mockUser));
+
+    GitRepo oldRepo = GitRepo.builder()
+            .id("1")
+            .name("old-repo")
+            .pushed_at(LocalDateTime.now().minusDays(60).toString())
+            .build();
+
+    when(githubClient.get())
+            .thenReturn((WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
+
+    when(requestHeadersUriSpec.uri(anyString()))
+            .thenAnswer(inv -> requestHeadersSpec);
+
+    when(requestHeadersSpec.headers(any()))
+            .thenAnswer(inv -> requestHeadersSpec);
+
+    when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+
+    when(responseSpec.bodyToFlux(GitRepo.class))
+            .thenReturn(Flux.just(oldRepo));
+
+    ActiveRepo result = githubService.countAllActiveRepos("gh_123");
+
+    assertThat(result.getTotalCount()).isEqualTo(1);
+    assertThat(result.getActiveRepo()).isEqualTo(0L);
+}
+
+@Test
+@DisplayName("countAllActiveRepos: should return all repos as active")
+@SuppressWarnings({"unchecked", "rawtypes"})
+void countAllActiveRepos_shouldReturnAllActive() throws UserNotFound {
+
+    when(appUserService.FindById("gh_123")).thenReturn(Optional.of(mockUser));
+
+    GitRepo repo1 = GitRepo.builder()
+            .id("1")
+            .pushed_at(LocalDateTime.now().minusDays(5).toString())
+            .build();
+
+    GitRepo repo2 = GitRepo.builder()
+            .id("2")
+            .pushed_at(LocalDateTime.now().minusDays(2).toString())
+            .build();
+
+    when(githubClient.get())
+            .thenReturn((WebClient.RequestHeadersUriSpec) requestHeadersUriSpec);
+
+    when(requestHeadersUriSpec.uri(anyString()))
+            .thenAnswer(inv -> requestHeadersSpec);
+
+    when(requestHeadersSpec.headers(any()))
+            .thenAnswer(inv -> requestHeadersSpec);
+
+    when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+
+    when(responseSpec.bodyToFlux(GitRepo.class))
+            .thenReturn(Flux.just(repo1, repo2));
+
+    ActiveRepo result = githubService.countAllActiveRepos("gh_123");
+
+    assertThat(result.getTotalCount()).isEqualTo(2);
+    assertThat(result.getActiveRepo()).isEqualTo(2L);
+}
+
+
 }

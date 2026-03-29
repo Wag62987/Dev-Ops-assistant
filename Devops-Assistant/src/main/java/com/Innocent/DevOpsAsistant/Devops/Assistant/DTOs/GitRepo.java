@@ -23,6 +23,8 @@ public class GitRepo {
     private String cloneUrl;
     @JsonProperty("stargazers_count")
     private String star;
-    private String langauage;
-
+   @JsonProperty("language")
+    private String language; 
+    @JsonProperty("pushed_at")
+    private String pushed_at;
 }

@@ -9,6 +9,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CIStatusResponse;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.PipelineCount;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -131,5 +133,52 @@ private CIStatusResponse fetchFailureDetails(
     private String extractOwner(String repoUrl) {
         return repoUrl.split("/")[3];
     }
+
+    public PipelineCount getRunningPipelineStats(String githubId) {
+    long count = countRunningPipelines(githubId);
+    return new PipelineCount(count);
 }
+    private long countRunningPipelines(String githubId) {
+
+    AppUser user = appUserService.FindById(githubId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    List<GitRepoEntity> repos = user.getRepos();
+
+    long runningCount = 0;
+
+    for (GitRepoEntity repo : repos) {
+
+        try {
+            Map<String, Object> response = githubClient.get()
+                    .uri("/repos/{owner}/{repo}/actions/runs?per_page=5",
+                            extractOwner(repo.getRepoUrl()),
+                            repo.getRepoName())
+                    .header("Authorization", "Bearer " + user.getGithub_token())
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null || !response.containsKey("workflow_runs")) {
+                continue;
+            }
+
+            List<Map<String, Object>> runs =
+                    (List<Map<String, Object>>) response.get("workflow_runs");
+
+            if (runs == null) continue;
+
+            runningCount += runs.stream()
+                    .filter(run -> "in_progress".equalsIgnoreCase((String) run.get("status")))
+                    .count();
+
+        } catch (Exception e) {
+            // ignore errors for individual repos
+        }
+    }
+
+    return runningCount;
+}
+}
+
 

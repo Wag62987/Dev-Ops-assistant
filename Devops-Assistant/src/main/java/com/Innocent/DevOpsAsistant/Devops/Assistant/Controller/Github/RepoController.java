@@ -8,13 +8,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.ActiveRepo;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.GitRepo;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Exception.UserNotFound;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @CrossOrigin(origins = "http://localhost:5173")
 @Slf4j
@@ -95,5 +100,17 @@ public ResponseEntity<String> DeleteALLRepo(@AuthenticationPrincipal AppUser app
         return ResponseEntity.ok("success");   
    }
    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Failed");
+}
+
+@GetMapping("/activeRepo")
+public ResponseEntity<ActiveRepo> getActiveRepo( @AuthenticationPrincipal AppUser appuser) throws UserNotFound {
+    if (appuser == null) {
+        return ResponseEntity
+                .status(401)
+                .build();
+    }
+    String githubId = appuser.getGithubId();
+    ActiveRepo activeRepo=githubService.countAllActiveRepos(githubId);
+    return ResponseEntity.ok(activeRepo);
 }
 }

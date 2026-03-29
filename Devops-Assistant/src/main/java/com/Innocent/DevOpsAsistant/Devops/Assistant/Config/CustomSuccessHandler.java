@@ -76,7 +76,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         userService.Save(user);
 
         String jwtToken = jwtUtil.generateToken(user);
-        // log.info("Generated JWT Token for user {}: {}", username, jwtToken);
+        log.info("Generated JWT Token for user {}: {}", username, jwtToken);
         Cookie cookie = new Cookie("JWT_TOKEN", jwtToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true); 
