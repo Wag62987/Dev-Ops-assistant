@@ -26,18 +26,24 @@ public class GitRepoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "repo_name")
     private String repoName;
+
+    @Column(name = "repo_url")
     private String repoUrl;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private String language;
+
     @Column(name = "github_repo_id", unique = true, nullable = false)
-private String githubRepoId;
+    private String githubRepoId;
 
-
-    // 🔗 MANY Repos → ONE AppUser
+    // MANY Repos → ONE AppUser
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-        name = "app_user_id",   // FK column in repos table
+        name = "app_user_id",
         nullable = false
     )
     @JsonIgnore
