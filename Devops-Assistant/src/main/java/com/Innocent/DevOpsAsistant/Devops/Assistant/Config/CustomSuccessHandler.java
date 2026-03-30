@@ -81,13 +81,12 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .path("/")
                 .maxAge(24 * 60 * 60) // 1 day
                 .build();
-
+        response.addCookie(cookie);
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.setHeader("Authorization", "Bearer " + jwtToken);
 
         log.info("User {} authenticated successfully. JWT token set in cookie and header.", username);
 
         // Redirect to frontend
-        response.sendRedirect("http://localhost:5173/dashboard");
-    }
+ response.sendRedirect("https://operadev.netlify.app/dashboard");    }
 }
