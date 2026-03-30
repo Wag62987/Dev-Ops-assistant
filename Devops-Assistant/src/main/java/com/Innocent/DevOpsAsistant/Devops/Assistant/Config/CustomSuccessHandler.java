@@ -81,7 +81,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .path("/")
                 .maxAge(24 * 60 * 60) // 1 day
                 .build();
-        response.addCookie(cookie);
+        
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.setHeader("Authorization", "Bearer " + jwtToken);
 
