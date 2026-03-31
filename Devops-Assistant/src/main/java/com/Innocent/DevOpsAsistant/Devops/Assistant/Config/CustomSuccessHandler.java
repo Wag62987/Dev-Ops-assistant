@@ -88,5 +88,5 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         log.info("User {} authenticated successfully. JWT token set in cookie and header.", username);
 
         // Redirect to frontend
- response.sendRedirect("https://operadev.netlify.app/dashboard");    }
+ response.sendRedirect("https://devsopsopera.netlify.app/dashboard");    }
 }
