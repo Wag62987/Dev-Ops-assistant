@@ -39,54 +39,86 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             Authentication authentication
     ) throws IOException, ServletException {
 
-        OAuth2AuthenticationToken authToken = (OAuth2AuthenticationToken) authentication;
-        Map<String, Object> attributes = authToken.getPrincipal().getAttributes();
+        try {
+            OAuth2AuthenticationToken authToken = (OAuth2AuthenticationToken) authentication;
+            Map<String, Object> attributes = authToken.getPrincipal().getAttributes();
 
-        String githubId = String.valueOf(attributes.get("id"));
-        String username = String.valueOf(attributes.get("login"));
-        String name = String.valueOf(attributes.get("name"));
+            // 🔍 DEBUG LOG
+            log.info("GitHub Attributes: {}", attributes);
 
-        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
-                authToken.getAuthorizedClientRegistrationId(),
-                authToken.getName()
-        );
+            // ✅ SAFE extraction
+            Object idObj = attributes.get("id");
+            Object loginObj = attributes.get("login");
+            Object nameObj = attributes.get("name");
 
-        String githubAccessToken = client.getAccessToken().getTokenValue();
+            if (idObj == null || loginObj == null) {
+                throw new RuntimeException("GitHub user data missing");
+            }
 
-        Optional<AppUser> existingUser = userService.FindById(githubId);
+            String githubId = idObj.toString();
+            String username = loginObj.toString();
+            String name = nameObj != null ? nameObj.toString() : username;
 
-        AppUser user;
-        if (existingUser.isEmpty()) {
-            user = new AppUser();
-            user.setGithubId(githubId);
-            user.setUsername(username);
-            user.setName(name);
-            user.setGithub_token(githubAccessToken);
-        } else {
-            user = existingUser.get();
-            user.setGithub_token(githubAccessToken);
+            // ✅ SAFE client handling
+            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+                    authToken.getAuthorizedClientRegistrationId(),
+                    authToken.getName()
+            );
+
+            String githubAccessToken = null;
+
+            if (client != null && client.getAccessToken() != null) {
+                githubAccessToken = client.getAccessToken().getTokenValue();
+            } else {
+                log.warn("GitHub access token is null!");
+            }
+
+            // ✅ DB logic
+            Optional<AppUser> existingUser = userService.FindById(githubId);
+
+            AppUser user;
+            if (existingUser.isEmpty()) {
+                user = new AppUser();
+                user.setGithubId(githubId);
+                user.setUsername(username);
+                user.setName(name);
+            } else {
+                user = existingUser.get();
+            }
+
+            if (githubAccessToken != null) {
+                user.setGithub_token(githubAccessToken);
+            }
+
+            userService.Save(user);
+
+            log.info("User saved successfully: {}", username);
+
+            // ✅ SAFE JWT generation
+            String jwtToken = jwtUtil.generateToken(user);
+
+            log.info("Generated JWT for {}: {}", username, jwtToken);
+
+            // ✅ COOKIE (production safe)
+            ResponseCookie cookie = ResponseCookie.from("JWT_TOKEN", jwtToken)
+                    .httpOnly(false)   // if you want JS access (change to true for more security)
+                    .secure(true)
+                    .sameSite("None")
+                    .path("/")
+                    .maxAge(24 * 60 * 60)
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+            response.setHeader("Authorization", "Bearer " + jwtToken);
+
+            log.info("JWT set in cookie & header");
+
+            // ✅ REDIRECT
+            response.sendRedirect("https://devsopsopera.netlify.app/dashboard");
+
+        } catch (Exception e) {
+            log.error("OAuth Success Handler Failed ❌", e);
+            throw e; // important → lets Spring show real error
         }
-
-        userService.Save(user);
-
-        // Generate JWT
-        String jwtToken = jwtUtil.generateToken(user);
-        log.info("Generated JWT Token for user {}: {}", username, jwtToken);
-
-       
-        ResponseCookie cookie = ResponseCookie.from("JWT_TOKEN", jwtToken)
-                .httpOnly(false)      // readable in JS
-                .secure(true)         // HTTPS only
-                .sameSite("None")     // cross-site allowed
-                .path("/")
-                .maxAge(24 * 60 * 60) // 1 day
-                .build();
-        
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        response.setHeader("Authorization", "Bearer " + jwtToken);
-
-        log.info("User {} authenticated successfully. JWT token set in cookie and header.", username);
-
-        // Redirect to frontend
- response.sendRedirect("https://devsopsopera.netlify.app/dashboard");    }
+    }
 }
