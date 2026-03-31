@@ -8,10 +8,14 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Config.Jwt.JwtFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -20,36 +24,34 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final CustomSuccessHandler successHandler;
+    private final JwtFilter jwtFilter; // ✅ added
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // JWT APIs are stateless
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
+
             .authorizeHttpRequests(auth -> auth
-                // OAuth endpoints
-                .requestMatchers(
-                    "/oauth2/**",
-                    "/login/**"
-                ).permitAll()
-
-                // JWT protected APIs
+                .requestMatchers("/oauth2/**", "/login/**").permitAll()
                 .requestMatchers("/repos/import","/repos/**","/deploy/**","/ci-status/**","/github/**","/user/**").authenticated()
-
                 .anyRequest().authenticated()
             )
 
-            // OAuth login (browser flow)
-            .oauth2Login(oauth -> oauth
-                .successHandler(successHandler)
+            // ✅ prevent redirect → return 401 instead
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> {
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                })
             )
 
-            // JWT validation (API flow)
-            .oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(Customizer.withDefaults())
+            .oauth2Login(oauth -> oauth
+                .successHandler(successHandler)
             );
+
+        // ✅ MOST IMPORTANT
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
