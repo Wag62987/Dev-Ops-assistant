@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
-@CrossOrigin(origins = "https://operadev.netlify.app")
+@CrossOrigin(origins = "https://devsopsopera.netlify.app")
 @Slf4j
 @RestController
 @RequestMapping("/repos")
