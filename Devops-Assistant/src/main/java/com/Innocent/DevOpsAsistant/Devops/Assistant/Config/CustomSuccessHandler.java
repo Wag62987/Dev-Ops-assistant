@@ -112,7 +112,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             log.info("JWT set in cookie & header");
 
          
-            response.sendRedirect("https://devsopsopera.netlify.app//dashboard");
+            response.sendRedirect("https://devsopsopera.netlify.app/dashboard");
 
         } catch (Exception e) {
             log.error("OAuth Success Handler Failed ❌", e);
