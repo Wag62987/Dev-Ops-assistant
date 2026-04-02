@@ -46,7 +46,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             // 🔍 DEBUG LOG
             log.info("GitHub Attributes: {}", attributes);
 
-            // ✅ SAFE extraction
+   
             Object idObj = attributes.get("id");
             Object loginObj = attributes.get("login");
             Object nameObj = attributes.get("name");
@@ -59,7 +59,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             String username = loginObj.toString();
             String name = nameObj != null ? nameObj.toString() : username;
 
-            // ✅ SAFE client handling
+ 
             OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
                     authToken.getAuthorizedClientRegistrationId(),
                     authToken.getName()
@@ -73,7 +73,6 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 log.warn("GitHub access token is null!");
             }
 
-            // ✅ DB logic
             Optional<AppUser> existingUser = userService.FindById(githubId);
 
             AppUser user;
@@ -94,12 +93,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             log.info("User saved successfully: {}", username);
 
-            // ✅ SAFE JWT generation
             String jwtToken = jwtUtil.generateToken(user);
 
             log.info("Generated JWT for {}: {}", username, jwtToken);
 
-            // ✅ COOKIE (production safe)
+        
             ResponseCookie cookie = ResponseCookie.from("JWT_TOKEN", jwtToken)
                     .httpOnly(false)   // if you want JS access (change to true for more security)
                     .secure(true)
@@ -113,8 +111,8 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             log.info("JWT set in cookie & header");
 
-            // ✅ REDIRECT
-            response.sendRedirect("https://devsopsopera.netlify.app/dashboard");
+         
+            response.sendRedirect("https://devsopsopera.netlify.app//dashboard");
 
         } catch (Exception e) {
             log.error("OAuth Success Handler Failed ❌", e);
