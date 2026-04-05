@@ -3,11 +3,10 @@ package com.Innocent.DevOpsAsistant.Devops.Assistant.Models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 @Entity
 @Table(name = "projects")
 @Data
@@ -23,13 +22,11 @@ public class Project {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    @Builder.Default
-    private List<Member> members = new ArrayList<>();
+    private Set<Member> members;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    @Builder.Default
-    private List<TaskItem> tasks = new ArrayList<>();
+    private List<TaskItem> tasks;
 }

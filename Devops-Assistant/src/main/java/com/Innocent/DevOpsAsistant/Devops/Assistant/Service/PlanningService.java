@@ -45,7 +45,8 @@ public class PlanningService {
         member.setProject(project);
         Member saved = memberRepository.save(member);
 
-        project.getMembers().add(saved);   // 🔥 FIX
+        project.getMembers().add(saved); 
+        projectRepository.save(project);
         return saved;
     }
 
@@ -56,7 +57,8 @@ public class PlanningService {
         task.setProject(project);
         TaskItem saved = taskRepository.save(task);
 
-        project.getTasks().add(saved);   // 🔥 FIX
+        project.getTasks().add(saved);
+        projectRepository.save(project);
         return saved;
     }
 
