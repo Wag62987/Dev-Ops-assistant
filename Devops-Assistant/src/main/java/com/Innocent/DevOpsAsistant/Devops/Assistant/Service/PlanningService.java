@@ -10,6 +10,7 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,18 +27,34 @@ public class PlanningService {
         return projectRepository.save(project);
     }
 
-    // ✅ Get All Projects (with Members + Tasks)
+    // ✅ Get All Projects (FIXED: Lazy loading + fetch collections)
+    @Transactional
     public List<Project> getProjects() {
-        return projectRepository.findAll();
+        List<Project> projects = projectRepository.findAll();
+
+        projects.forEach(p -> {
+            p.getMembers().size(); // force load members
+            p.getTasks().size();   // force load tasks
+        });
+
+        return projects;
     }
 
-    // ✅ Add Member
-    public Member addMember(Member member) {
+    // ✅ Add Member (FIXED: link with project)
+    public Member addMember(Integer projectId, Member member) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        member.setProject(project); // 🔥 important
         return memberRepository.save(member);
     }
 
-    // ✅ Add Task
-    public TaskItem addTask(TaskItem task) {
+    // ✅ Add Task (FIXED: link with project)
+    public TaskItem addTask(Integer projectId, TaskItem task) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        task.setProject(project); // 🔥 important
         return taskRepository.save(task);
     }
 

@@ -4,9 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 @Entity
 @Table(name = "projects")
 @Data
@@ -21,11 +21,12 @@ public class Project {
 
     @Column(nullable = false, length = 200)
     private String name;
-@OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-@JsonManagedReference
-private List<Member> members;
 
-@OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-@JsonManagedReference
-private List<TaskItem> tasks;
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private Set<Member> members;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<TaskItem> tasks;
 }
