@@ -19,35 +19,41 @@ public class PlanningController {
 
     private final PlanningService service;
 
+    // ✅ Create Project
     @PostMapping("/project")
     public ResponseEntity<Project> createProject(@RequestBody Project project) {
         Project savedProject = service.createProject(project);
         return ResponseEntity.ok(savedProject);
     }
 
-   @GetMapping("/projects")
-public ResponseEntity<?> getProjects() {
-    try {
-        return ResponseEntity.ok(service.getProjects());
-    } catch (Exception e) {
-        e.printStackTrace(); // 🔥 IMPORTANT
-        return ResponseEntity.status(500).body(e.getMessage());
+    // ✅ Get All Projects
+    @GetMapping("/projects")
+    public ResponseEntity<?> getProjects() {
+        try {
+            return ResponseEntity.ok(service.getProjects());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
     }
-}
 
-    @PostMapping("/member")
-    public ResponseEntity<String> addMember(@RequestBody Member member) {
-        System.out.println("REQUEST CHECK!!");
-        service.addMember(member);
+    // ✅ Add Member (FIXED: projectId added)
+    @PostMapping("/project/{projectId}/member")
+    public ResponseEntity<String> addMember(@PathVariable Integer projectId,
+                                            @RequestBody Member member) {
+        service.addMember(projectId, member);
         return ResponseEntity.ok("Member added successfully");
     }
 
-    @PostMapping("/task")
-    public ResponseEntity<String> addTask(@RequestBody TaskItem task) {
-        service.addTask(task);
+    // ✅ Add Task (FIXED: projectId added)
+    @PostMapping("/project/{projectId}/task")
+    public ResponseEntity<String> addTask(@PathVariable Integer projectId,
+                                          @RequestBody TaskItem task) {
+        service.addTask(projectId, task);
         return ResponseEntity.ok("Task added successfully");
     }
 
+    // ✅ Delete Project
     @DeleteMapping("/project/{id}")
     public ResponseEntity<String> deleteProject(@PathVariable Integer id) {
         try {
