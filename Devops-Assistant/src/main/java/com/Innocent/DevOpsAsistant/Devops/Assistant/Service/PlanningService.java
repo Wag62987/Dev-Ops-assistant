@@ -22,43 +22,44 @@ public class PlanningService {
     private final MemberRepository memberRepository;
     private final TaskRepository taskRepository;
 
-    // ✅ Create Project
     public Project createProject(Project project) {
         return projectRepository.save(project);
     }
 
-    // ✅ Get All Projects (FIXED: Lazy loading + fetch collections)
     @Transactional
     public List<Project> getProjects() {
         List<Project> projects = projectRepository.findAll();
 
         projects.forEach(p -> {
-            p.getMembers().size(); // force load members
-            p.getTasks().size();   // force load tasks
+            p.getMembers().size();
+            p.getTasks().size();
         });
 
         return projects;
     }
 
-    // ✅ Add Member (FIXED: link with project)
     public Member addMember(Integer projectId, Member member) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        member.setProject(project); // 🔥 important
-        return memberRepository.save(member);
+        member.setProject(project);
+        Member saved = memberRepository.save(member);
+
+        project.getMembers().add(saved);   // 🔥 FIX
+        return saved;
     }
 
-    // ✅ Add Task (FIXED: link with project)
     public TaskItem addTask(Integer projectId, TaskItem task) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        task.setProject(project); // 🔥 important
-        return taskRepository.save(task);
+        task.setProject(project);
+        TaskItem saved = taskRepository.save(task);
+
+        project.getTasks().add(saved);   // 🔥 FIX
+        return saved;
     }
 
-    // ✅ Delete Project (Cascade handles Members + Tasks)
     public void deleteProject(Integer id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
