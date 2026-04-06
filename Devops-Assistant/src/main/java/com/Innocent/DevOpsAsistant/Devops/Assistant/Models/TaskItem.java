@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "tasks")
@@ -32,8 +33,8 @@ public class TaskItem {
     
 @ManyToOne
 @JoinColumn(name = "project_id")
-@JsonBackReference
-private Project project;
+@JsonIgnoreProperties({"tasks", "members"})
+private Project project;;
 
     // Member relation (RESTRICT DELETE like EF)
     @ManyToOne

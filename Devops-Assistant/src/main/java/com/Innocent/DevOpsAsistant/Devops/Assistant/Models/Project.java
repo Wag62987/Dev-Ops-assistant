@@ -3,9 +3,11 @@ package com.Innocent.DevOpsAsistant.Devops.Assistant.Models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 @Entity
 @Table(name = "projects")
@@ -22,11 +24,11 @@ public class Project {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private Set<Member> members;
+   @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+@JsonIgnoreProperties("project") // ignore back-reference during serialization
+private List<Member> members = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<TaskItem> tasks;
+@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+@JsonIgnoreProperties("project")
+private List<TaskItem> tasks = new ArrayList<>();
 }

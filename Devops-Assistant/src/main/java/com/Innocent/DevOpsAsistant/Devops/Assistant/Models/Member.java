@@ -1,6 +1,7 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +26,6 @@ public class Member {
 
 @ManyToOne
 @JoinColumn(name = "project_id")
-@JsonBackReference
+@JsonIgnoreProperties("members") // avoid infinite loop
 private Project project;
 }
