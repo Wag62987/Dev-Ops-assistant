@@ -25,7 +25,7 @@ import lombok.Setter;
 public class AppUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // ✅ works with PostgreSQL
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "github_token")
@@ -43,17 +43,19 @@ public class AppUser {
     @Column(nullable = true)
     private String password;
 
-    // ✅ FIXED (important for DB consistency)
     @Column(name = "otp")
     private Integer OTP;
 
     @Column(name = "otpexpier")
     private Long OTPexpier;
 
-    // ONE AppUser → MANY Repos
     @OneToMany(mappedBy = "appUser", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<GitRepoEntity> repos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Project> projects = new ArrayList<>();
 
     public AppUser(String githubId, String name, String username, String token) {
         this.githubId = githubId;

@@ -1,16 +1,28 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Models;
 
-import jakarta.persistence.*;
-import lombok.*;
+import java.time.LocalDate;
 
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "tasks")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -24,20 +36,22 @@ public class TaskItem {
     private String title;
 
     @Column(length = 50)
+    @Builder.Default
     private String status = "Pending";
 
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
 
-    // Project relation (CASCADE DELETE like EF)
-    
-@ManyToOne
-@JoinColumn(name = "project_id")
-@JsonIgnoreProperties({"tasks", "members"})
-private Project project;;
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate;
 
-    // Member relation (RESTRICT DELETE like EF)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    @JsonIgnore
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
+    @JsonIgnore
     private Member member;
 }

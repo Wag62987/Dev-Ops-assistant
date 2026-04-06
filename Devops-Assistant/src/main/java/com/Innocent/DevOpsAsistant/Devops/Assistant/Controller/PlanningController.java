@@ -1,5 +1,8 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Controller;
 
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.AddMemberRequest;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.AddTaskRequest;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CreateProjectRequest;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.Member;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.Project;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.TaskItem;
@@ -8,6 +11,8 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.PlanningService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,48 +24,55 @@ public class PlanningController {
 
     private final PlanningService service;
 
-    // ✅ Create Project
+    // Create Project
     @PostMapping("/project")
-    public ResponseEntity<Project> createProject(@RequestBody Project project) {
-        Project savedProject = service.createProject(project);
-        return ResponseEntity.ok(savedProject);
+    public ResponseEntity<Project> createProject(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody CreateProjectRequest request) {
+
+        String githubId = userDetails.getUsername(); // assuming username = githubId
+        return ResponseEntity.ok(service.createProject(githubId, request));
     }
 
-    // ✅ Get All Projects
+    // Get all projects for the authenticated user
     @GetMapping("/projects")
-    public ResponseEntity<?> getProjects() {
-        try {
-            return ResponseEntity.ok(service.getProjects());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
+    public ResponseEntity<List<Project>> getProjects(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String githubId = userDetails.getUsername();
+        return ResponseEntity.ok(service.getProjects(githubId));
     }
 
-    // ✅ Add Member (FIXED: projectId added)
+    // Add Member to a project
     @PostMapping("/project/{projectId}/member")
-    public ResponseEntity<String> addMember(@PathVariable Integer projectId,
-                                            @RequestBody Member member) {
-        service.addMember(projectId, member);
-        return ResponseEntity.ok("Member added successfully");
+    public ResponseEntity<Member> addMember(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Integer projectId,
+            @RequestBody AddMemberRequest request) {
+
+        String githubId = userDetails.getUsername();
+        return ResponseEntity.ok(service.addMember(githubId, projectId, request));
     }
 
-    // ✅ Add Task (FIXED: projectId added)
+    // Add Task to a project
     @PostMapping("/project/{projectId}/task")
-    public ResponseEntity<String> addTask(@PathVariable Integer projectId,
-                                          @RequestBody TaskItem task) {
-        service.addTask(projectId, task);
-        return ResponseEntity.ok("Task added successfully");
+    public ResponseEntity<TaskItem> addTask(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Integer projectId,
+            @RequestBody AddTaskRequest request) {
+
+        String githubId = userDetails.getUsername();
+        return ResponseEntity.ok(service.addTask(githubId, projectId, request));
     }
 
-    // ✅ Delete Project
-    @DeleteMapping("/project/{id}")
-    public ResponseEntity<String> deleteProject(@PathVariable Integer id) {
-        try {
-            service.deleteProject(id);
-            return ResponseEntity.ok("Project deleted successfully");
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(404).body(ex.getMessage());
-        }
+    // Delete a project
+    @DeleteMapping("/project/{projectId}")
+    public ResponseEntity<String> deleteProject(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Integer projectId) {
+
+        String githubId = userDetails.getUsername();
+        service.deleteProject(githubId, projectId);
+        return ResponseEntity.ok("Project deleted successfully");
     }
 }
