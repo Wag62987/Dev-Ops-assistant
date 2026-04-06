@@ -1,16 +1,8 @@
 package com.Innocent.DevOpsAsistant.Devops.Assistant.Service;
 
-import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.AddMemberRequest;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.AddTaskRequest;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CreateProjectRequest;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.Member;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.Project;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.TaskItem;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.AppUserRepository;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.MemberRepository;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.ProjectRepository;
-import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.TaskRepository;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.*;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.*;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,15 +20,18 @@ public class PlanningService {
     private final AppUserRepository appUserRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
-    private final TaskRepository taskRepository;
 
     private AppUser getUserByGithubId(String githubId) {
         return appUserRepository.findByGithubId(githubId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // =============================
+    // CREATE PROJECT
+    // =============================
     @Transactional
     public Project createProject(String githubId, CreateProjectRequest request) {
+
         AppUser user = getUserByGithubId(githubId);
 
         String name = request.getName() == null ? "" : request.getName().trim();
@@ -52,24 +47,32 @@ public class PlanningService {
         return projectRepository.save(project);
     }
 
+    // =============================
+    // GET PROJECTS
+    // =============================
     @Transactional(readOnly = true)
     public List<Project> getProjects(String githubId) {
-        // makes sure only this user's projects are returned
-        List<Project> projects = projectRepository.findByUser_GithubIdOrderByIdDesc(githubId);
 
-        // initialize lazy collections inside transaction
+        List<Project> projects =
+                projectRepository.findByUser_GithubIdOrderByIdDesc(githubId);
+
+        // initialize lazy collections
         projects.forEach(p -> {
             p.getMembers().size();
             p.getTasks().size();
         });
 
-        log.info("Fetched {} projects for user {}", projects.size(), githubId);
         return projects;
     }
 
+    // =============================
+    // ADD MEMBER (FIXED)
+    // =============================
     @Transactional
     public Member addMember(String githubId, Integer projectId, AddMemberRequest request) {
-        Project project = projectRepository.findByIdAndUser_GithubId(projectId, githubId)
+
+        Project project = projectRepository
+                .findByIdAndUser_GithubId(projectId, githubId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         String name = request.getName() == null ? "" : request.getName().trim();
@@ -85,17 +88,23 @@ public class PlanningService {
                 .project(project)
                 .build();
 
-        Member saved = memberRepository.save(member);
+        // ✅ CRITICAL: ADD TO LIST FIRST
+        project.getMembers().add(member);
 
-        project.getMembers().add(saved);
+        // ✅ SAVE PROJECT (Hibernate sets member_order)
         projectRepository.save(project);
 
-        return saved;
+        return member;
     }
 
+    // =============================
+    // ADD TASK (FIXED)
+    // =============================
     @Transactional
     public TaskItem addTask(String githubId, Integer projectId, AddTaskRequest request) {
-        Project project = projectRepository.findByIdAndUser_GithubId(projectId, githubId)
+
+        Project project = projectRepository
+                .findByIdAndUser_GithubId(projectId, githubId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         String title = request.getTitle() == null ? "" : request.getTitle().trim();
@@ -104,11 +113,7 @@ public class PlanningService {
         }
 
         if (request.getStartDate() == null || request.getEndDate() == null) {
-            throw new IllegalArgumentException("Start date and end date are required");
-        }
-
-        if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new IllegalArgumentException("End date cannot be before start date");
+            throw new IllegalArgumentException("Start & End date required");
         }
 
         Member member = null;
@@ -116,8 +121,8 @@ public class PlanningService {
             member = memberRepository.findById(request.getMemberId())
                     .orElseThrow(() -> new RuntimeException("Member not found"));
 
-            if (member.getProject() == null || !member.getProject().getId().equals(projectId)) {
-                throw new IllegalArgumentException("Selected member does not belong to this project");
+            if (!member.getProject().getId().equals(projectId)) {
+                throw new IllegalArgumentException("Member not in project");
             }
         }
 
@@ -130,17 +135,23 @@ public class PlanningService {
                 .member(member)
                 .build();
 
-        TaskItem saved = taskRepository.save(task);
+        // ✅ CRITICAL: ADD TO LIST
+        project.getTasks().add(task);
 
-        project.getTasks().add(saved);
+        // ✅ SAVE PROJECT (Hibernate sets task_order)
         projectRepository.save(project);
 
-        return saved;
+        return task;
     }
 
+    // =============================
+    // DELETE PROJECT
+    // =============================
     @Transactional
     public void deleteProject(String githubId, Integer projectId) {
-        Project project = projectRepository.findByIdAndUser_GithubId(projectId, githubId)
+
+        Project project = projectRepository
+                .findByIdAndUser_GithubId(projectId, githubId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         projectRepository.delete(project);
