@@ -3,6 +3,7 @@ package com.Innocent.DevOpsAsistant.Devops.Assistant.Controller;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.AddMemberRequest;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.AddTaskRequest;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.DTOs.CreateProjectRequest;
+import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.Member;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.Project;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.TaskItem;
@@ -46,32 +47,32 @@ public class PlanningController {
     // Add Member to a project
     @PostMapping("/project/{projectId}/member")
     public ResponseEntity<Member> addMember(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal  AppUser appuser,
             @PathVariable Integer projectId,
             @RequestBody AddMemberRequest request) {
 
-        String githubId = userDetails.getUsername();
+        String githubId = appuser.getGithubId();
         return ResponseEntity.ok(service.addMember(githubId, projectId, request));
     }
 
     // Add Task to a project
     @PostMapping("/project/{projectId}/task")
     public ResponseEntity<TaskItem> addTask(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal AppUser appuser,
             @PathVariable Integer projectId,
             @RequestBody AddTaskRequest request) {
 
-        String githubId = userDetails.getUsername();
+        String githubId = appuser.getGithubId();
         return ResponseEntity.ok(service.addTask(githubId, projectId, request));
     }
 
     // Delete a project
     @DeleteMapping("/project/{projectId}")
     public ResponseEntity<String> deleteProject(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal AppUser appuser,
             @PathVariable Integer projectId) {
 
-        String githubId = userDetails.getUsername();
+        String githubId = appuser.getGithubId();
         service.deleteProject(githubId, projectId);
         return ResponseEntity.ok("Project deleted successfully");
     }
