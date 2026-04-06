@@ -28,19 +28,19 @@ public class PlanningController {
     // Create Project
     @PostMapping("/project")
     public ResponseEntity<Project> createProject(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal AppUser appuser,
             @RequestBody CreateProjectRequest request) {
 
-        String githubId = userDetails.getUsername(); // assuming username = githubId
+        String githubId = appuser.getGithubId();
         return ResponseEntity.ok(service.createProject(githubId, request));
     }
 
     // Get all projects for the authenticated user
     @GetMapping("/projects")
     public ResponseEntity<List<Project>> getProjects(
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal AppUser appuser) {
 
-        String githubId = userDetails.getUsername();
+        String githubId = appuser.getGithubId();
         return ResponseEntity.ok(service.getProjects(githubId));
     }
 
