@@ -17,8 +17,6 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Service.GithubService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @CrossOrigin(origins = "https://devsopsopera.netlify.app")
@@ -95,11 +93,18 @@ public class RepoController {
      return ResponseEntity.ok(repo);
     }
    @DeleteMapping("/deleteAll")
-public ResponseEntity<String> DeleteALLRepo(@AuthenticationPrincipal AppUser appuser){
-   if(githubService.DeleteAllRepo(appuser)){
-        return ResponseEntity.ok("success");   
-   }
-   return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Failed");
+public ResponseEntity<String> DeleteALLRepo(@AuthenticationPrincipal AppUser appUser){
+    if (appUser == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+    }
+
+    boolean deleted = githubService.DeleteAllRepo(appUser);
+
+    if (deleted) {
+        return ResponseEntity.ok("All repos deleted");
+    }
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Delete failed");
 }
 
 @GetMapping("/activeRepo")

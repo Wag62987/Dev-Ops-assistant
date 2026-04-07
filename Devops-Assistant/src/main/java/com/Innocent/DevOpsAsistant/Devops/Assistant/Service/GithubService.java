@@ -95,15 +95,14 @@ public class GithubService {
                 
         return deletedRepo;
     }
+  
     @Transactional
-public Boolean DeleteAllRepo(AppUser appuser) {
+    public boolean DeleteAllRepo(AppUser appUser) {
+        if (appUser == null) return false;
 
-    if (appuser == null) return false;
-
-    gitRepoRepository.deleteAllByGithubId(appuser.getGithubId());
-
-    return true;
-}
+        gitRepoRepository.deleteAllByAppUser(appUser);
+        return true;
+    }
 
 
 public ActiveRepo countAllActiveRepos(String githubId) throws UserNotFound {
