@@ -15,6 +15,7 @@ import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Repository.GitRepoRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,15 +95,15 @@ public class GithubService {
                 
         return deletedRepo;
     }
-    public Boolean DeleteAllRepo(AppUser appuser) {
-        // TODO Auto-generated method stub
-      List<GitRepoEntity> Allrepo=appuser.getRepos();
+    @Transactional
+public Boolean DeleteAllRepo(AppUser appuser) {
 
-      for( GitRepoEntity repo : Allrepo){
-            gitRepoRepository.delete(repo);
-      }
-      return true;
-    }
+    if (appuser == null) return false;
+
+    gitRepoRepository.deleteAllByGithubId(appuser.getGithubId());
+
+    return true;
+}
 
 
 public ActiveRepo countAllActiveRepos(String githubId) throws UserNotFound {
