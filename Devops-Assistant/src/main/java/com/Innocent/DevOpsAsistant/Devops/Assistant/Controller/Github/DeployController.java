@@ -48,7 +48,7 @@ public class DeployController {
     config.setDockerEnabled(configDTO.getDockerEnabled());
     config.setCdEnabled(configDTO.getCdEnabled());
     config.setDeployHookUrl(configDTO.getDeployHookUrl());
-
+     System.out.println("Received deployment request for repoId: " + repoId + " with config: " + configDTO);
     GitRepoEntity repo = githubService.getRepoById(repoId);
 
     // Generate workflow
