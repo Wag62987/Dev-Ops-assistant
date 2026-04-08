@@ -35,7 +35,7 @@ public class DeployController {
     private final GithubService githubService;
 
  @PostMapping("/{repoId}")
-  public ResponseEntity<Map<String, Object>> deployRepo(
+public ResponseEntity<Map<String, Object>> deployRepo(
         @PathVariable String repoId,
         @Valid @RequestBody CICDconfigDTO configDTO,
         @AuthenticationPrincipal AppUser appuser
@@ -48,28 +48,27 @@ public class DeployController {
     config.setDockerEnabled(configDTO.getDockerEnabled());
     config.setCdEnabled(configDTO.getCdEnabled());
     config.setDeployHookUrl(configDTO.getDeployHookUrl());
-     System.out.println("Received deployment request for repoId: " + repoId + " with config: " + configDTO);
+
+    System.out.println("Received deployment request for repoId: " + repoId + " with config: " + configDTO);
+
     GitRepoEntity repo = githubService.getRepoById(repoId);
 
-    // Generate workflow
     String workflowContent = workflowService.generateWorkflow(config);
- 
-    // Commit workflow
+
     commitService.commitWorkflow(appuser.getGithubId(), repo, workflowContent);
 
-    // Fetch CI/CD status
     CIStatusResponse ciStatus = statusService.fetchLatestCIStatus(appuser.getGithubId(), repo);
 
-                Map<String, Object> response = new HashMap<>();
-                response.put("message", "CI/CD pipeline triggered");
-                response.put("repository", repo.getRepoName());
-                response.put("branch", config.getBranchName());
-                response.put("ciStatus", ciStatus.getStatus());
-                response.put("failedStep", ciStatus.getFailedStep());
-                response.put("reason", ciStatus.getReason());
-                response.put("logsUrl", ciStatus.getLogsUrl());
-                response.put("monitoring", "/ci-status/" + repoId);
-        return ResponseEntity.ok(response);
-}
-}
+    Map<String, Object> response = new HashMap<>();
+    response.put("message", "CI/CD pipeline triggered");
+    response.put("repository", repo.getRepoName());
+    response.put("branch", config.getBranchName());
+    response.put("ciStatus", ciStatus.getStatus());
+    response.put("failedStep", ciStatus.getFailedStep());
+    response.put("reason", ciStatus.getReason());
+    response.put("logsUrl", ciStatus.getLogsUrl());
+    response.put("monitoring", "/ci-status/" + repoId);
 
+    return ResponseEntity.ok(response);
+}
+}
