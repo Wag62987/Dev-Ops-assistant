@@ -35,41 +35,46 @@ public class DeployController {
     private final GithubService githubService;
 
  @PostMapping("/{repoId}")
-  public ResponseEntity<Map<String, Object>> deployRepo(
+public ResponseEntity<?> deployRepo(
         @PathVariable String repoId,
-        @Valid @RequestBody CICDconfigDTO configDTO,
+        @RequestBody CICDconfigDTO configDTO,
         @AuthenticationPrincipal AppUser appuser
 ) {
-    CICDConfigEntity config = new CICDConfigEntity();
-    config.setProjectType(configDTO.getProjectType());
-    config.setBuildTool(configDTO.getBuildTool());
-    config.setRuntimeVersion(configDTO.getRuntimeVersion());
-    config.setBranchName(configDTO.getBranchName());
-    config.setDockerEnabled(configDTO.getDockerEnabled());
-    config.setCdEnabled(configDTO.getCdEnabled());
-    config.setDeployHookUrl(configDTO.getDeployHookUrl());
-     System.out.println("Received deployment request for repoId: " + repoId + " with config: " + configDTO);
-    GitRepoEntity repo = githubService.getRepoById(repoId);
+    try {
+        System.out.println("DEPLOY HIT");
+        System.out.println("repoId = " + repoId);
+        System.out.println("appuser = " + appuser);
 
-    // Generate workflow
-    String workflowContent = workflowService.generateWorkflow(config);
- 
-    // Commit workflow
-    commitService.commitWorkflow(appuser.getGithubId(), repo, workflowContent);
+        if (appuser == null) {
+            return ResponseEntity.status(401).body("User not authenticated");
+        }
 
-    // Fetch CI/CD status
-    CIStatusResponse ciStatus = statusService.fetchLatestCIStatus(appuser.getGithubId(), repo);
+        GitRepoEntity repo = githubService.getRepoById(repoId);
+        System.out.println("repo = " + repo.getRepoName());
 
-                Map<String, Object> response = new HashMap<>();
-                response.put("message", "CI/CD pipeline triggered");
-                response.put("repository", repo.getRepoName());
-                response.put("branch", config.getBranchName());
-                response.put("ciStatus", ciStatus.getStatus());
-                response.put("failedStep", ciStatus.getFailedStep());
-                response.put("reason", ciStatus.getReason());
-                response.put("logsUrl", ciStatus.getLogsUrl());
-                response.put("monitoring", "/ci-status/" + repoId);
-        return ResponseEntity.ok(response);
+        CICDConfigEntity config = new CICDConfigEntity();
+        config.setProjectType(configDTO.getProjectType());
+        config.setBuildTool(configDTO.getBuildTool());
+        config.setRuntimeVersion(configDTO.getRuntimeVersion());
+        config.setBranchName(configDTO.getBranchName());
+        config.setDockerEnabled(configDTO.getDockerEnabled());
+        config.setCdEnabled(configDTO.getCdEnabled());
+        config.setDeployHookUrl(configDTO.getDeployHookUrl());
+
+        String workflowContent = workflowService.generateWorkflow(config);
+        System.out.println("workflow generated");
+
+        commitService.commitWorkflow(appuser.getGithubId(), repo, workflowContent);
+        System.out.println("workflow committed");
+
+        CIStatusResponse ciStatus =
+                statusService.fetchLatestCIStatus(appuser.getGithubId(), repo);
+
+        return ResponseEntity.ok(ciStatus);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
 }
 }
 
