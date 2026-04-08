@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final CustomSuccessHandler successHandler;
-    private final JwtFilter jwtFilter; // ✅ added
+    private final JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -32,25 +32,28 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/oauth2/**", "/login/**").permitAll()
-                .requestMatchers("/repos/import","/repos/**","/deploy/**","/ci-status/**","/github/**","/user/**","/api/planning/**").authenticated()
+                .requestMatchers(
+                        "/repos/import",
+                        "/repos/**",
+                        "/deploy/**",
+                        "/ci-status/**",
+                        "/github/**",
+                        "/user/**",
+                        "/api/planning/**"
+                ).authenticated()
                 .anyRequest().authenticated()
             )
-
-            // ✅ prevent redirect → return 401 instead
             .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> {
-                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                })
+                .authenticationEntryPoint((req, res, e) ->
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
+                )
             )
-
             .oauth2Login(oauth -> oauth
                 .successHandler(successHandler)
             );
 
-        // ✅ MOST IMPORTANT
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -58,15 +61,16 @@ public class SecurityConfig {
 
     @Bean
     public CorsFilter corsFilter() {
-
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:5173","https://devsopsopera.netlify.app",
-                                         "https://devsopsopera.netlify.app",
-                                         "https://devsopsopera.vercel.app",
-                                        "https://cheerful-bonbon-a322c5.netlify.app"));
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://devsopsopera.netlify.app",
+                "https://devsopsopera.vercel.app",
+                "https://cheerful-bonbon-a322c5.netlify.app"
+        ));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
