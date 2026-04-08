@@ -5,10 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;       
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Setter     
+@Setter   
+@ToString  
 public class CICDconfigDTO {
     @NotBlank(message = "Project type is required")
     private String projectType;
