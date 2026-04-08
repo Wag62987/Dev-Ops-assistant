@@ -7,11 +7,13 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.AppUser;
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Models.GitRepoEntity;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +44,7 @@ public class GithubCommitService {
 
         String sha = null;
         try {
-            Map response = webClient.get()
+            Map<?, ?> response = webClient.get()
                     .uri("/repos/{owner}/{repo}/contents/{path}", owner, repoName, path)
                     .header("Authorization", "Bearer " + accessToken)
                     .header("Accept", "application/vnd.github.v3+json")
@@ -51,9 +53,12 @@ public class GithubCommitService {
                     .block();
 
             if (response != null) {
-                sha = (String) response.get("sha");
+                Object shaObj = response.get("sha");
+                if (shaObj != null) {
+                    sha = shaObj.toString();
+                }
             }
-        } catch (Exception e) {
+        } catch (WebClientResponseException.NotFound e) {
             System.out.println("File not found, will create new file");
         }
 
@@ -62,13 +67,11 @@ public class GithubCommitService {
         Map<String, Object> body = new HashMap<>();
         body.put("message", sha == null ? "Add CI pipeline" : "Update CI pipeline");
         body.put("content", encodedContent);
+        body.put("branch", "main");
 
         if (sha != null) {
             body.put("sha", sha);
         }
-
-        // ✅ FIX: REQUIRED FOR GITHUB API
-        body.put("branch", "main");
 
         System.out.println("STEP 4: Sending PUT request to GitHub");
 
@@ -79,6 +82,13 @@ public class GithubCommitService {
                 .header("Content-Type", "application/json")
                 .bodyValue(body)
                 .retrieve()
+                .onStatus(status -> status.isError(), response ->
+                        response.bodyToMono(String.class)
+                                .defaultIfEmpty("Unknown GitHub error")
+                                .flatMap(error -> Mono.error(
+                                        new RuntimeException("GitHub commit failed: " + error)
+                                ))
+                )
                 .toBodilessEntity()
                 .block();
 
