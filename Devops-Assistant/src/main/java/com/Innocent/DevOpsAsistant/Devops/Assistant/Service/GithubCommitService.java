@@ -47,7 +47,9 @@ public class GithubCommitService {
             Map<?, ?> response = webClient.get()
                     .uri("/repos/{owner}/{repo}/contents/{path}", owner, repoName, path)
                     .header("Authorization", "Bearer " + accessToken)
-                    .header("Accept", "application/vnd.github.v3+json")
+                    .header("Accept", "application/vnd.github+json")
+                    .header("X-GitHub-Api-Version", "2022-11-28")
+                    .header("User-Agent", "Opera-DevOps-Assistant")
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
@@ -78,16 +80,19 @@ public class GithubCommitService {
         webClient.put()
                 .uri("/repos/{owner}/{repo}/contents/{path}", owner, repoName, path)
                 .header("Authorization", "Bearer " + accessToken)
-                .header("Accept", "application/vnd.github.v3+json")
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .header("User-Agent", "Opera-DevOps-Assistant")
                 .header("Content-Type", "application/json")
                 .bodyValue(body)
                 .retrieve()
                 .onStatus(status -> status.isError(), response ->
                         response.bodyToMono(String.class)
                                 .defaultIfEmpty("Unknown GitHub error")
-                                .flatMap(error -> Mono.error(
-                                        new RuntimeException("GitHub commit failed: " + error)
-                                ))
+                                .flatMap(error -> {
+                                    System.out.println("GITHUB ERROR: " + error);
+                                    return Mono.error(new RuntimeException(error));
+                                })
                 )
                 .toBodilessEntity()
                 .block();
