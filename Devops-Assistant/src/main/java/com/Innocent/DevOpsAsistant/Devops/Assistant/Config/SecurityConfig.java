@@ -7,6 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -15,6 +19,7 @@ import org.springframework.web.filter.CorsFilter;
 
 import com.Innocent.DevOpsAsistant.Devops.Assistant.Config.Jwt.JwtFilter;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +30,7 @@ public class SecurityConfig {
 
     private final CustomSuccessHandler successHandler;
     private final JwtFilter jwtFilter;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -52,11 +58,33 @@ public class SecurityConfig {
             )
             .oauth2Login(oauth -> oauth
                 .successHandler(successHandler)
+                .authorizationEndpoint(endpoint -> endpoint
+                    .authorizationRequestResolver(authorizationRequestResolver())
+                )
             );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public OAuth2AuthorizationRequestResolver authorizationRequestResolver() {
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+            new DefaultOAuth2AuthorizationRequestResolver(
+                clientRegistrationRepository,
+                "/oauth2/authorization"
+            );
+
+        resolver.setAuthorizationRequestCustomizer(customizer -> customizer
+            .additionalParameters(params -> {
+                // Force GitHub to always show consent screen with fresh scopes
+                params.put("prompt", "consent");
+            })
+            .scope("read:user", "repo", "workflow", "admin:repo_hook", "read:org")
+        );
+
+        return resolver;
     }
 
     @Bean
