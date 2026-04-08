@@ -36,7 +36,9 @@ public class GithubCommitService {
         String owner = extractOwner(repo.getRepoUrl());
         String repoName = repo.getRepoName();
         String path = ".github/workflows/ci.yml";
-
+         System.out.println("OWNER = " + owner);
+System.out.println("REPO = " + repoName);
+System.out.println("FULL URL = " + repo.getRepoUrl());
         String encodedContent = Base64.getEncoder()
                 .encodeToString(workflowContent.getBytes(StandardCharsets.UTF_8));
 
@@ -100,7 +102,12 @@ public class GithubCommitService {
         System.out.println("STEP 5: Commit successful");
     }
 
-    private String extractOwner(String repoUrl) {
-        return repoUrl.split("/")[3];
+   private String extractOwner(String repoUrl) {
+    try {
+        String[] parts = repoUrl.replace(".git", "").split("/");
+        return parts[parts.length - 2];
+    } catch (Exception e) {
+        throw new RuntimeException("Invalid repo URL: " + repoUrl);
     }
+}
 }
