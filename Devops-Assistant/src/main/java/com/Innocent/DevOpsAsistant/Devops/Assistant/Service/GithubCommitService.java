@@ -34,7 +34,7 @@ public class GithubCommitService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String accessToken = user.getGithub_token();
-System.out.println("Access token: "+accessToken) 
+System.out.println("Access token: "+accessToken);
 
         String owner = extractOwner(repo.getRepoUrl());
         String repoName = repo.getRepoName();
