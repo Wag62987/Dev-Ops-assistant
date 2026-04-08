@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class Auth {
     @GetMapping("/")
     public String Start(){
-        return "<h1>Hello World</h1>";
+        return "<h1>Hello World!!</h1>";
     }
 }
