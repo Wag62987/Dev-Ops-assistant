@@ -45,8 +45,8 @@ public class DeployController {
     config.setBuildTool(configDTO.getBuildTool());
     config.setRuntimeVersion(configDTO.getRuntimeVersion());
     config.setBranchName(configDTO.getBranchName());
-    config.setDockerEnabled(configDTO.isDockerEnabled());
-    config.setCdEnabled(configDTO.isCdEnabled());
+    config.setDockerEnabled(configDTO.getDockerEnabled());
+    config.setCdEnabled(configDTO.getCdEnabled());
     config.setDeployHookUrl(configDTO.getDeployHookUrl());
 
     GitRepoEntity repo = githubService.getRepoById(repoId);
