@@ -25,7 +25,8 @@ public class GithubCommitService {
     public void commitWorkflow(
             String githubId,
             GitRepoEntity repo,
-            String workflowContent
+            String workflowContent,
+            String branch   // ✅ NEW PARAM
     ) {
 
         System.out.println("STEP 1: Starting commit");
@@ -34,11 +35,15 @@ public class GithubCommitService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String accessToken = user.getGithub_token();
-System.out.println("Access token: "+accessToken);
+        System.out.println("Access token: " + accessToken);
 
         String owner = extractOwner(repo.getRepoUrl());
         String repoName = repo.getRepoName();
-        String branch = "main"; // keep consistent
+
+        // ✅ Fallback if user didn't send branch
+        if (branch == null || branch.isEmpty()) {
+            branch = "main";
+        }
 
         String path = ".github/workflows/ci.yml";
 
@@ -57,7 +62,7 @@ System.out.println("Access token: "+accessToken);
             Map<?, ?> response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/repos/{owner}/{repo}/contents/{path}")
-                            .queryParam("ref", branch)
+                            .queryParam("ref", branch) // ✅ USING USER BRANCH
                             .build(owner, repoName, path))
                     .header("Authorization", "Bearer " + accessToken)
                     .header("Accept", "application/vnd.github+json")
@@ -82,7 +87,7 @@ System.out.println("Access token: "+accessToken);
         Map<String, Object> body = new HashMap<>();
         body.put("message", sha == null ? "Add CI pipeline" : "Update CI pipeline");
         body.put("content", encodedContent);
-        body.put("branch", branch);
+        body.put("branch", branch); // ✅ IMPORTANT
 
         if (sha != null) {
             body.put("sha", sha);
@@ -99,8 +104,6 @@ System.out.println("Access token: "+accessToken);
                 .header("Content-Type", "application/json")
                 .bodyValue(body)
                 .retrieve()
-
-                // ✅ FIXED BLOCK
                 .onStatus(status -> status.isError(), response ->
                         response.bodyToMono(String.class)
                                 .defaultIfEmpty("Unknown GitHub error")
@@ -114,7 +117,6 @@ System.out.println("Access token: "+accessToken);
                                     return Mono.error(new RuntimeException(error));
                                 })
                 )
-
                 .toBodilessEntity()
                 .block();
 
