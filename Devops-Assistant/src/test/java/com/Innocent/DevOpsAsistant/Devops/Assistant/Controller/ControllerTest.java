@@ -400,41 +400,43 @@ void getActiveRepo_shouldReturn401_whenUserNull() throws UserNotFound {
         @Mock private GithubService githubService;
         @InjectMocks private DeployController deployController;
 
-        @Test
-        @DisplayName("deployRepo: returns 200 with pipeline response map")
-        void deployRepo_shouldReturn200WithResponseMap() {
-            CICDconfigDTO dto = new CICDconfigDTO();
-            dto.setProjectType("SPRING_BOOT");
-            dto.setBuildTool("MAVEN");
-            dto.setRuntimeVersion("17");
-            dto.setBranchName("main");
-            dto.setDockerEnabled(false);
-            dto.setCdEnabled(false);
+       @Test
+@DisplayName("deployRepo: returns 200 with pipeline response map")
+void deployRepo_shouldReturn200WithResponseMap() {
+    CICDconfigDTO dto = new CICDconfigDTO();
+    dto.setProjectType("SPRING_BOOT");
+    dto.setBuildTool("MAVEN");
+    dto.setRuntimeVersion("17");
+    dto.setBranchName("main");
+    dto.setDockerEnabled(false);
+    dto.setCdEnabled(false);
 
-            CIStatusResponse ciStatus = new CIStatusResponse(
-                    "SUCCESS", null, null, "https://logs.url");
+    CIStatusResponse ciStatus = new CIStatusResponse(
+            "SUCCESS", null, null, "https://logs.url");
 
-            when(githubService.getRepoById("1L")).thenReturn(mockRepo);
-            when(workflowService.generateWorkflow(any(CICDConfigEntity.class)))
-                    .thenReturn("name: CI Pipeline\n");
-            doNothing().when(commitService)
-                    .commitWorkflow(anyString(), any(GitRepoEntity.class), anyString());
-            when(statusService.fetchLatestCIStatus(anyString(), any(GitRepoEntity.class)))
-                    .thenReturn(ciStatus);
+    when(githubService.getRepoById("1L")).thenReturn(mockRepo);
+    when(workflowService.generateWorkflow(any(CICDConfigEntity.class)))
+            .thenReturn("name: CI Pipeline\n");
 
-            ResponseEntity<Map<String, Object>> response =
-                    deployController.deployRepo("1L", dto, mockUser);
+    doNothing().when(commitService)
+            .commitWorkflow(anyString(), any(GitRepoEntity.class), anyString(), anyString());
 
-            assertThat(response).isNotNull();
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    when(statusService.fetchLatestCIStatus(anyString(), any(GitRepoEntity.class)))
+            .thenReturn(ciStatus);
 
-            Map<String, Object> body = response.getBody();
-            assertThat(body).isNotNull();
-            assertThat(body)
-                    .containsEntry("message", "CI/CD pipeline triggered")
-                    .containsEntry("repository", "my-repo")
-                    .containsEntry("branch", "main")
-                    .containsEntry("ciStatus", "SUCCESS");
-        }
+    ResponseEntity<Map<String, Object>> response =
+            deployController.deployRepo("1L", dto, mockUser);
+
+    assertThat(response).isNotNull();
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    Map<String, Object> body = response.getBody();
+    assertThat(body).isNotNull();
+    assertThat(body)
+            .containsEntry("message", "CI/CD pipeline triggered")
+            .containsEntry("repository", "my-repo")
+            .containsEntry("branch", "main")
+            .containsEntry("ciStatus", "SUCCESS");
+}
     }
 }
