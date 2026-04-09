@@ -93,9 +93,11 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "https://operadevopsassis.netlify.app",
                 "https://devsopsopera.netlify.app",
                 "https://devsopsopera.vercel.app",
                 "https://cheerful-bonbon-a322c5.netlify.app"
+
         ));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
