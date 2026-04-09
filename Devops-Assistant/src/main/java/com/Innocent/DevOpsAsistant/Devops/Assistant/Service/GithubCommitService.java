@@ -29,34 +29,20 @@ public class GithubCommitService {
             String branch
     ) {
 
-        System.out.println("STEP 1: Starting commit");
-
         AppUser user = appUserService.FindById(githubId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String accessToken = user.getGithub_token();
-        System.out.println("Access token: " + accessToken);
 
         String owner = extractOwner(repo.getRepoUrl());
         String repoName = repo.getRepoName();
 
-        String branchInput = branch;
-        if (branchInput == null || branchInput.isEmpty()) {
-            branchInput = "main";
-        }
-
-        final String finalBranch = branchInput;
+        final String finalBranch = (branch == null || branch.isEmpty()) ? "main" : branch;
 
         String path = ".github/workflows/ci.yml";
 
-        System.out.println("OWNER = " + owner);
-        System.out.println("REPO = " + repoName);
-        System.out.println("BRANCH = " + finalBranch);
-
         String encodedContent = Base64.getEncoder()
                 .encodeToString(workflowContent.getBytes(StandardCharsets.UTF_8));
-
-        System.out.println("STEP 2: Fetching SHA");
 
         String sha = null;
 
@@ -64,7 +50,7 @@ public class GithubCommitService {
             Map<?, ?> response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/repos/{owner}/{repo}/contents/{path}")
-                            .queryParam("ref", finalBranch)
+                            .queryParam("ref", finalBranch)   // ✅ FIXED
                             .build(owner, repoName, path))
                     .header("Authorization", "Bearer " + accessToken)
                     .header("Accept", "application/vnd.github+json")
@@ -80,22 +66,16 @@ public class GithubCommitService {
 
         } catch (WebClientResponseException.NotFound e) {
             System.out.println("File not found → creating new file");
-        } catch (Exception e) {
-            System.out.println("SHA ERROR: " + e.getMessage());
         }
-
-        System.out.println("STEP 3: SHA = " + sha);
 
         Map<String, Object> body = new HashMap<>();
         body.put("message", sha == null ? "Add CI pipeline" : "Update CI pipeline");
         body.put("content", encodedContent);
-        body.put("branch", finalBranch);
+        body.put("branch", finalBranch);   // ✅ FIXED
 
         if (sha != null) {
             body.put("sha", sha);
         }
-
-        System.out.println("STEP 4: Sending PUT request");
 
         webClient.put()
                 .uri("/repos/{owner}/{repo}/contents/{path}", owner, repoName, path)
@@ -108,29 +88,14 @@ public class GithubCommitService {
                 .retrieve()
                 .onStatus(status -> status.isError(), response ->
                         response.bodyToMono(String.class)
-                                .defaultIfEmpty("Unknown GitHub error")
-                                .flatMap(error -> {
-                                    System.out.println("GITHUB ERROR BODY: " + error);
-
-                                    response.headers().asHttpHeaders().forEach((k, v) ->
-                                            System.out.println("HEADER: " + k + " -> " + v)
-                                    );
-
-                                    return Mono.error(new RuntimeException(error));
-                                })
+                                .flatMap(error -> Mono.error(new RuntimeException(error)))
                 )
                 .toBodilessEntity()
                 .block();
-
-        System.out.println("STEP 5: Commit successful");
     }
 
     private String extractOwner(String repoUrl) {
-        try {
-            String[] parts = repoUrl.replace(".git", "").split("/");
-            return parts[parts.length - 2];
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid repo URL: " + repoUrl);
-        }
+        String[] parts = repoUrl.replace(".git", "").split("/");
+        return parts[parts.length - 2];
     }
 }
