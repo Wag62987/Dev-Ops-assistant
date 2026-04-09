@@ -26,7 +26,7 @@ public class GithubCommitService {
             String githubId,
             GitRepoEntity repo,
             String workflowContent,
-            String branch   // ✅ NEW PARAM
+            String branch
     ) {
 
         System.out.println("STEP 1: Starting commit");
@@ -40,16 +40,18 @@ public class GithubCommitService {
         String owner = extractOwner(repo.getRepoUrl());
         String repoName = repo.getRepoName();
 
-        // ✅ Fallback if user didn't send branch
-        if (branch == null || branch.isEmpty()) {
-            branch = "main";
+        String branchInput = branch;
+        if (branchInput == null || branchInput.isEmpty()) {
+            branchInput = "main";
         }
+
+        final String finalBranch = branchInput;
 
         String path = ".github/workflows/ci.yml";
 
         System.out.println("OWNER = " + owner);
         System.out.println("REPO = " + repoName);
-        System.out.println("BRANCH = " + branch);
+        System.out.println("BRANCH = " + finalBranch);
 
         String encodedContent = Base64.getEncoder()
                 .encodeToString(workflowContent.getBytes(StandardCharsets.UTF_8));
@@ -62,7 +64,7 @@ public class GithubCommitService {
             Map<?, ?> response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/repos/{owner}/{repo}/contents/{path}")
-                            .queryParam("ref", branch) // ✅ USING USER BRANCH
+                            .queryParam("ref", finalBranch)
                             .build(owner, repoName, path))
                     .header("Authorization", "Bearer " + accessToken)
                     .header("Accept", "application/vnd.github+json")
@@ -87,7 +89,7 @@ public class GithubCommitService {
         Map<String, Object> body = new HashMap<>();
         body.put("message", sha == null ? "Add CI pipeline" : "Update CI pipeline");
         body.put("content", encodedContent);
-        body.put("branch", branch); // ✅ IMPORTANT
+        body.put("branch", finalBranch);
 
         if (sha != null) {
             body.put("sha", sha);
